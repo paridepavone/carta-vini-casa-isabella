@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Carta Vini</title>
+
+  <!-- Font: elegante + leggibile -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+
+<body>
+  <!-- Top bar -->
+  <header class="topbar">
+    <div class="topbar__inner">
+      <div class="brand">
+          <img src="logo.png" alt="Logo La Cantina del Duca" class="brand__logo">
+          <div class="brand__txt">
+          <div class="brand__name">Carta Vini</div>
+              <div class="brand__sub">Selezione aggiornata</div>
+        </div>
+       </div>
+
+      <div class="topbar__right">
+        <div class="status" id="hint">Caricamento…</div>
+        <div class="pill">
+          <span>Risultati</span>
+          <strong id="countPill">0</strong>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- LIST VIEW -->
+    <section id="listView">
+      <!-- Filters -->
+      <section class="panel filters">
+        <div class="panel__head">
+          <h2>Filtri</h2>
+          <p>Trova il vino giusto in pochi secondi.</p>
+        </div>
+
+        <div class="filters__grid">
+          <div class="field field--wide">
+            <label for="q">Cerca</label>
+            <input id="q" type="text" placeholder="Titolo, descrizione, uvaggio…" autocomplete="off" />
+          </div>
+
+          <div class="field">
+            <label for="tipologia">Tipologia</label>
+            <select id="tipologia">
+              <option value="">Tutte</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="luogo">Regione / Luogo</label>
+            <select id="luogo">
+              <option value="">Tutti</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="uvaggio">Uvaggio</label>
+            <select id="uvaggio">
+              <option value="">Tutti</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="annata">Annata</label>
+            <select id="annata">
+              <option value="">Tutte</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="prezzoMax">Prezzo max (€)</label>
+            <input id="prezzoMax" type="number" min="0" step="1" placeholder="Es. 35" />
+          </div>
+
+          <div class="actions">
+            <button class="btn btn--ghost" id="resetBtn" type="button">Reset filtri</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Grid -->
+      <section class="grid" id="grid" aria-label="Lista vini">
+        <!-- cards generate da script.js -->
+      </section>
+    </section>
+
+    <!-- DETAIL VIEW -->
+    <section id="detailView" style="display:none;">
+      <div class="detailTop">
+        <button class="btn btn--ghost" id="backBtn" type="button">← Indietro</button>
+      </div>
+
+      <section class="panel detail" id="detailCard" aria-label="Dettaglio vino">
+        <!-- html generate da script.js -->
+      </section>
+    </section>
+
+    <!-- Footer micro -->
+    <footer class="footer">
+      <div class="footer__inner">
+        <span>Le cantine del Duca</span>
+        <span class="dot">•</span>
+        <span>Powered by Frote e Chiaro Studio</span>
+      </div>
+    </footer>
+  </main>
+
+  <script src="./script.js" defer></script>
+</body>
+</html>
