@@ -1,122 +1,108 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin - Casa Isabella</title>
-  <link rel="stylesheet" href="styles.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    .admin-card { background: #fff; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #eee; box-shadow: var(--shadow); }
-    .btn-save { background: var(--bordeaux); color: white; width: 100%; padding: 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; }
-    .wine-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee; }
-    .btn-del { background: #ff4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; }
-    input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; font-family: inherit; }
-    .status-badge { padding: 10px; border-radius: 8px; margin-bottom: 15px; display: none; text-align: center; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Casa Isabella</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #f4f4f4; }
+        .form-card { background: white; padding: 20px; border-radius: 8px; max-width: 500px; margin: auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        input, select, textarea { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #800020; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        button:disabled { background: #ccc; }
+        #status { margin-top: 15px; text-align: center; font-weight: bold; }
+    </style>
 </head>
 <body>
 
-  <header class="topbar">
-    <div class="topbar__inner">
-      <div class="brand">
-        <div class="brand__name">Gestione Cantina</div>
-      </div>
-      <a href="index.html" style="color: var(--gold); font-weight: bold; text-decoration: none;">Vedi Menù</a>
-    </div>
-  </header>
+<div class="form-card">
+    <h2>Aggiungi Nuovo Vino</h2>
+    <input type="text" id="titolo" placeholder="Nome del vino (es. Barolo DOCG)" required>
+    <input type="text" id="cantina" placeholder="Cantina">
+    <select id="tipologia">
+        <option value="Rosso">Rosso</option>
+        <option value="Bianco">Bianco</option>
+        <option value="Bollicine">Bollicine</option>
+        <option value="Rosato">Rosato</option>
+        <option value="Dolce">Dolce</option>
+    </select>
+    <input type="text" id="luogo" placeholder="Regione/Luogo">
+    <input type="number" id="prezzo" placeholder="Prezzo (es. 25.50)" step="0.01">
+    <textarea id="descrizione" placeholder="Descrizione o note..."></textarea>
+    
+    <label>Foto Bottiglia:</label>
+    <input type="file" id="foto" accept="image/*">
+    
+    <button id="btnSalva">AGGIUNGI ALLA CARTA</button>
+    <div id="status"></div>
+</div>
 
-  <main class="wrap">
-    <div id="msg" class="status-badge"></div>
-
-    <section class="admin-card">
-      <h2 style="font-family: var(--font-serif); margin-top: 0;">Nuova Bottiglia</h2>
-      <form id="addWineForm">
-        <input type="text" id="titolo" placeholder="Nome del vino (es. Amarone)" required>
-        <input type="text" id="cantina" placeholder="Cantina">
-        <div style="display: flex; gap: 10px;">
-          <input type="text" id="tipologia" placeholder="Tipo (Rosso, Bianco...)">
-          <input type="text" id="annata" placeholder="Annata">
-        </div>
-        <input type="text" id="luogo" placeholder="Territorio/Regione">
-        <input type="number" id="prezzo" step="0.50" placeholder="Prezzo (€)" required>
-        <textarea id="descrizione" placeholder="Descrizione o uvaggio..."></textarea>
-        
-        <label style="font-size: 13px; color: var(--muted); display: block; margin-top: 10px;">Foto Bottiglia:</label>
-        <input type="file" id="fotoFile" accept="image/*" capture="environment">
-        
-        <button type="submit" class="btn-save" id="btnSubmit">AGGIUNGI ALLA CARTA</button>
-      </form>
-    </section>
-
-    <section class="admin-card">
-      <h2 style="font-family: var(--font-serif); margin-top: 0;">Vini in Lista</h2>
-      <div id="adminWineList">Caricamento vini...</div>
-    </section>
-  </main>
-
-  <script>
+<script>
     const SUPABASE_URL = "https://bxdermzgfunwpvgektnz.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ4ZGVybXpnZnVud3B2Z2VrdG56Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3MDk1NzksImV4cCI6MjA4NjI4NTU3OX0.yIr_RtG2WDDl09l5MY2MWFd2PnnoE0L3c0uVxBBzQCE";
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    const form = document.getElementById('addWineForm');
-    const listDiv = document.getElementById('adminWineList');
-    const msgDiv = document.getElementById('msg');
+    const btn = document.getElementById('btnSalva');
+    const status = document.getElementById('status');
 
-    function showMsg(txt, color) {
-      msgDiv.innerText = txt;
-      msgDiv.style.display = 'block';
-      msgDiv.style.background = color === 'red' ? '#fee2e2' : '#dcfce7';
-      msgDiv.style.color = color === 'red' ? '#991b1b' : '#166534';
-      setTimeout(() => msgDiv.style.display = 'none', 3000);
-    }
+    btn.onclick = async () => {
+        const titolo = document.getElementById('titolo').value;
+        const file = document.getElementById('foto').files[0];
+        
+        if (!titolo) return alert("Inserisci almeno il titolo!");
 
-    async function fetchAdminWines() {
-      const { data, error } = await _supabase.from('vini').select('*').order('titolo', { ascending: true });
-      if (error) return listDiv.innerText = "Errore: " + error.message;
-      
-      listDiv.innerHTML = data.length ? data.map(w => `
-        <div class="wine-item">
-          <div>
-            <strong>${w.titolo}</strong><br>
-            <small style="color:var(--muted)">${w.tipologia || 'Vino'} - ${w.prezzo}€</small>
-          </div>
-          <button class="btn-del" onclick="deleteWine(${w.id})">Elimina</button>
-        </div>
-      `).join('') : "Nessun vino presente.";
-    }
+        btn.disabled = true;
+        status.innerText = "Caricamento in corso...";
+        status.style.color = "orange";
 
-    window.deleteWine = async (id) => {
-      if (!confirm("Eliminare definitivamente questo vino?")) return;
-      const { error } = await _supabase.from('vini').delete().eq('id', id);
-      if (error) showMsg("Errore eliminazione", "red");
-      else { showMsg("Vino rimosso", "green"); fetchAdminWines(); }
-    };
+        try {
+            let immagine_url = "";
 
-    form.onsubmit = async (e) => {
-      e.preventDefault();
-      const btn = document.getElementById('btnSubmit');
-      btn.innerText = "Caricamento in corso...";
-      btn.disabled = true;
+            // 1. Caricamento Foto (se presente)
+            if (file) {
+                const fileName = `${Date.now()}_${file.name.replace(/\s/g, '_')}`;
+                const { data: uploadData, error: uploadError } = await _supabase.storage
+                    .from('bottiglie')
+                    .upload(fileName, file);
 
-      const file = document.getElementById('fotoFile').files[0];
-      let imgUrl = "";
+                if (uploadError) throw uploadError;
 
-      try {
-        if (file) {
-          const fileExt = file.name.split('.').pop();
-          const fileName = `${Date.now()}.${fileExt}`;
-          const { data: uploadData, error: uploadError } = await _supabase.storage
-            .from('bottiglie')
-            .upload(fileName, file);
-          
-          if (uploadError) throw uploadError;
-          const { data: pUrl } = _supabase.storage.from('bottiglie').getPublicUrl(fileName);
-          imgUrl = pUrl.publicUrl;
+                const { data: publicUrlData } = _supabase.storage
+                    .from('bottiglie')
+                    .getPublicUrl(fileName);
+                
+                immagine_url = publicUrlData.publicUrl;
+            }
+
+            // 2. Caricamento Dati Tabella
+            const { error: dbError } = await _supabase
+                .from('vini')
+                .insert([{
+                    titolo: titolo,
+                    cantina: document.getElementById('cantina').value,
+                    tipologia: document.getElementById('tipologia').value,
+                    luogo: document.getElementById('luogo').value,
+                    prezzo: parseFloat(document.getElementById('prezzo').value) || 0,
+                    descrizione: document.getElementById('descrizione').value,
+                    immagine_url: immagine_url
+                }]);
+
+            if (dbError) throw dbError;
+
+            status.innerText = "Vino inserito con successo! 🍷";
+            status.style.color = "green";
+            document.querySelectorAll('input, textarea').forEach(i => i.value = "");
+
+        } catch (err) {
+            console.error(err);
+            status.innerText = "Errore: " + (err.message || "Controlla la console");
+            status.style.color = "red";
+        } finally {
+            btn.disabled = false;
         }
+    };
+</script>
 
-        const { error: dbError } = await _supabase.from('vini').insert([{
-          titolo: document.getElementById('titolo').value,
-          cantina: document.getElementById('cantina').value,
-          tipologia:
+</body>
+</html>
