@@ -32,26 +32,21 @@
   </script>
 </head>
 
-<body>
   <header class="topbar">
-    <div class="topbar__inner">
-      <div class="brand">
-          <img src="logo.png" alt="Logo La Cantina del Duca" class="brand__logo">
-          <div class="brand__txt">
-            <div class="brand__name">Le Cantine del Duca</div>
-            <div class="brand__sub">Selezione aggiornata</div>
-          </div>
-       </div>
-
-      <div class="topbar__right">
-        <div class="status" id="hint">Caricamento…</div>
-        <div class="pill">
-          <span>Risultati</span>
-          <strong id="countPill">0</strong>
-        </div>
+  <div class="wrap">
+    <div class="brand">CASA ISABELLA</div>
+    <div class="search-container">
+      <input type="text" id="q" placeholder="Cerca un vino o una cantina...">
+      <div class="filter-row">
+        <select id="tipologia"></select>
+        <select id="luogo"></select>
       </div>
+      <div id="hint">Caricamento in corso...</div>
     </div>
-  </header>
+  </div>
+</header>
+
+<body>
 
   <main class="wrap">
     <section id="listView">
