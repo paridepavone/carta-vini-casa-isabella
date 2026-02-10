@@ -60,18 +60,33 @@ body{
   justify-content: space-between;
 }
 
-.brand{ display: flex; align-items: center; gap: 12px; text-decoration: none; }
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .brand__logo {
-  width: 42px;
-  height: 42px;
-  background-color: var(--bordeaux); /* Sfondo bordeaux originale */
-  background-image: url('./logo.png'); /* Il tuo file */
-  background-size: 70%; /* Ridimensiona il PNG dentro il quadratino */
+  width: 44px;
+  height: 44px;
+  background-color: var(--bordeaux); /* Colore di fondo se l'immagine non carica */
+  background-image: url('./logo.png'); /* Percorso del tuo file */
+  background-size: cover; /* O 'contain' se preferisci vedere tutto il bordo del logo */
   background-repeat: no-repeat;
   background-position: center;
   border-radius: 12px;
-  position: relative;
-  flex-shrink: 0;
+  flex-shrink: 0; /* Fondamentale: impedisce al logo di rimpicciolirsi a 0 su mobile */
+  display: block !important; /* Forza la visualizzazione */
+}
+
+/* La cornice dorata che avevi nel file originale */
+.brand__logo::after {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border: 1px solid rgba(183,154,87,0.3);
+  border-radius: 8px;
+  pointer-events: none;
 }
 
 /* La cornice dorata sottile che avevi nell'originale */
