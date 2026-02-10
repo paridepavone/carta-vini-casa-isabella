@@ -61,15 +61,15 @@ body{
 }
 
 .brand{ display: flex; align-items: center; gap: 12px; text-decoration: none; }
-.brand__logo{
-  width: 42px; height: 42px;
-  background: var(--bordeaux);
+.brand__logo {
+  width: 44px; /* Dimensione originale */
+  height: 44px;
+  background-image: url('./logo.png'); /* Carica il tuo file PNG */
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
   border-radius: 12px;
-  position: relative;
-}
-.brand__logo::after{
-  content: ""; position: absolute; inset: 8px;
-  border: 1.5px solid rgba(183,154,87,0.4); border-radius: 8px;
+  flex-shrink: 0;
 }
 
 .brand__name{
