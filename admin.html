@@ -1,131 +1,87 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
-  <title>Le Cantine del Duca - Carta Vini</title>
-
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#4a0f1d">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Cantina Duca">
-  <link rel="apple-touch-icon" href="logo.png">
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-
-  <link rel="stylesheet" href="./styles.css" />
-
-  <script>
-    /**
-     * Registrazione del Service Worker per la modalità OFFLINE
-     */
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-          .then(reg => console.log('PWA: Service Worker registrato con successo!', reg))
-          .catch(err => console.log('PWA: Errore registrazione SW', err));
-      });
-    }
-  </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Gestione Vini</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-
 <body>
-  <header class="topbar">
-    <div class="topbar__inner">
-      <div class="brand">
-          <img src="logo.png" alt="Logo La Cantina del Duca" class="brand__logo">
-          <div class="brand__txt">
-            <div class="brand__name">Le Cantine del Duca</div>
-            <div class="brand__sub">Selezione aggiornata</div>
-          </div>
-       </div>
+    <div class="wrap">
+        <header class="topbar">
+            <h1 class="brand__name">Aggiungi Nuovo Vino</h1>
+        </header>
 
-      <div class="topbar__right">
-        <div class="status" id="hint">Caricamento…</div>
-        <div class="pill">
-          <span>Risultati</span>
-          <strong id="countPill">0</strong>
-        </div>
-      </div>
-    </div>
-  </header>
-
-  <main class="wrap">
-    <section id="listView">
-      
-      <div id="featuredContainer"></div>
-
-      <section class="panel filters" aria-label="Filtri di ricerca">
-        <div class="filters__grid">
-          <div class="field field--full">
-            <label for="q">Cerca vino o cantina</label>
-            <input id="q" type="search" placeholder="Es. Amarone, Gaja..." />
-          </div>
-
-          <div class="field">
-            <label for="tipologia">Tipologia</label>
-            <select id="tipologia">
-              <option value="">Tutte</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label for="luogo">Territorio</label>
-            <select id="luogo">
-              <option value="">Tutti</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label for="uvaggio">Uvaggio</label>
-            <select id="uvaggio">
-              <option value="">Tutti</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label for="annata">Annata</label>
-            <select id="annata">
-              <option value="">Tutte</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label for="prezzoMax">Prezzo max (€)</label>
-            <input id="prezzoMax" type="number" min="0" step="1" placeholder="Es. 35" />
-          </div>
-
-          <div class="actions">
-            <button class="btn btn--ghost" id="resetBtn" type="button">Reset filtri</button>
-          </div>
-        </div>
-      </section>
-
-      <section class="grid" id="grid" aria-label="Lista vini">
+        <section class="panel">
+            <form id="wineForm" class="filters__grid">
+                <div class="field field--full">
+                    <label>Nome Vino</label>
+                    <input type="text" id="titolo" required placeholder="Es. Amarone della Valpolicella">
+                </div>
+                <div class="field">
+                    <label>Cantina</label>
+                    <input type="text" id="cantina" required>
+                </div>
+                <div class="field">
+                    <label>Prezzo (€)</label>
+                    <input type="number" id="prezzo" step="0.50" required>
+                </div>
+                <div class="field">
+                    <label>Foto Bottiglia</label>
+                    <input type="file" id="foto" accept="image/*" capture="environment">
+                </div>
+                <div class="actions">
+                    <button type="submit" class="btn" style="background: var(--bordeaux); color: white; padding: 15px;">Salva Vino</button>
+                </div>
+            </form>
+            <div id="statusMsg" style="margin-top: 20px; font-weight: bold;"></div>
         </section>
-    </section>
-
-    <section id="detailView" style="display:none;">
-      <div class="detailTop">
-        <button class="btn btn--ghost" id="backBtn" type="button">← Indietro</button>
-      </div>
-
-      <section class="panel detail" id="detailCard" aria-label="Dettaglio vino">
-        </section>
-    </section>
-  </main>
-
-  <footer class="footer">
-    <div class="footer__inner">
-      <span>Le Cantine del Duca</span>
-      <span class="dot">•</span>
-      <span>Menù Digitale Offline Ready</span>
     </div>
-  </footer>
 
-  <script src="./script.js"></script>
+    <script>
+        const SUPABASE_URL = 'IL_TUO_URL_SUPABASE';
+        const SUPABASE_KEY = 'LA_TUA_CHIAVE_ANON';
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const form = document.getElementById('wineForm');
+        
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            const status = document.getElementById('statusMsg');
+            status.innerText = "Caricamento in corso...";
+
+            const file = document.getElementById('foto').files[0];
+            let imageUrl = "";
+
+            // 1. Carica la foto se presente
+            if (file) {
+                const fileName = `${Date.now()}_${file.name}`;
+                const { data, error } = await supabase.storage
+                    .from('bottiglie')
+                    .upload(fileName, file);
+                
+                if (error) { status.innerText = "Errore foto: " + error.message; return; }
+                
+                const { data: publicUrl } = supabase.storage.from('bottiglie').getPublicUrl(fileName);
+                imageUrl = publicUrl.publicUrl;
+            }
+
+            // 2. Salva i dati nel Database
+            const { error: dbError } = await supabase.from('vini').insert([{
+                titolo: document.getElementById('titolo').value,
+                cantina: document.getElementById('cantina').value,
+                prezzo: parseFloat(document.getElementById('prezzo').value),
+                immagine_url: imageUrl
+            }]);
+
+            if (dbError) {
+                status.innerText = "Errore DB: " + dbError.message;
+            } else {
+                status.innerText = "Vino salvato con successo! 🎉";
+                form.reset();
+            }
+        };
+    </script>
 </body>
 </html>
