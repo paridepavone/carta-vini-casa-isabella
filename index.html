@@ -3,70 +3,129 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
-  <title>CASA ISABELLA - Carta Vini</title>
+  <title>Le Cantine del Duca - Carta Vini</title>
+
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#4a0f1d">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Cantina Duca">
   <link rel="apple-touch-icon" href="logo.png">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="./styles.css" />
+
+  <script>
+    /**
+     * Registrazione del Service Worker per la modalità OFFLINE
+     */
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => console.log('PWA: Service Worker registrato con successo!', reg))
+          .catch(err => console.log('PWA: Errore registrazione SW', err));
+      });
+    }
+  </script>
 </head>
+
 <body>
+  <header class="topbar">
+    <div class="topbar__inner">
+      <div class="brand">
+          <img src="logo.png" alt="Logo La Cantina del Duca" class="brand__logo">
+          <div class="brand__txt">
+            <div class="brand__name">Le Cantine del Duca</div>
+            <div class="brand__sub">Selezione aggiornata</div>
+          </div>
+       </div>
 
-<header class="topbar">
-  <div class="topbar__inner">
-    <div class="brand">
-   <div class="brand__logo"></div>
-   <div class="brand__content">
-      <div class="brand__name">CASA ISABELLA</div>
-      <div class="brand__sub">Carta Vini Digitale</div>
-   </div>
-</div>
-    <div class="status"><span id="countPill">0</span> etichette</div>
-  </div>
-</header>
-
-<main class="wrap" id="listView">
-  <section class="panel">
-    <div class="filters__grid">
-      <div class="field">
-        <label>Ricerca</label>
-        <input type="text" id="q" placeholder="Cerca vino o cantina...">
-      </div>
-      <div class="field">
-        <label>Tipologia</label>
-        <select id="tipologia"><option value="">Tutte</option></select>
-      </div>
-      <div class="field">
-        <label>Regione</label>
-        <select id="luogo"><option value="">Tutte</option></select>
+      <div class="topbar__right">
+        <div class="status" id="hint">Caricamento…</div>
+        <div class="pill">
+          <span>Risultati</span>
+          <strong id="countPill">0</strong>
+        </div>
       </div>
     </div>
-    <div id="hint" style="text-align:center; font-size:10px; padding-bottom:10px; color:#999;"></div>
-  </section>
-  
-  <div class="grid" id="grid">
+  </header>
+
+  <main class="wrap">
+    <section id="listView">
+      
+      <div id="featuredContainer"></div>
+
+      <section class="panel filters" aria-label="Filtri di ricerca">
+        <div class="filters__grid">
+          <div class="field field--full">
+            <label for="q">Cerca vino o cantina</label>
+            <input id="q" type="search" placeholder="Es. Amarone, Gaja..." />
+          </div>
+
+          <div class="field">
+            <label for="tipologia">Tipologia</label>
+            <select id="tipologia">
+              <option value="">Tutte</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="luogo">Territorio</label>
+            <select id="luogo">
+              <option value="">Tutti</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="uvaggio">Uvaggio</label>
+            <select id="uvaggio">
+              <option value="">Tutti</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="annata">Annata</label>
+            <select id="annata">
+              <option value="">Tutte</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="prezzoMax">Prezzo max (€)</label>
+            <input id="prezzoMax" type="number" min="0" step="1" placeholder="Es. 35" />
+          </div>
+
+          <div class="actions">
+            <button class="btn btn--ghost" id="resetBtn" type="button">Reset filtri</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid" id="grid" aria-label="Lista vini">
+        </section>
+    </section>
+
+    <section id="detailView" style="display:none;">
+      <div class="detailTop">
+        <button class="btn btn--ghost" id="backBtn" type="button">← Indietro</button>
+      </div>
+
+      <section class="panel detail" id="detailCard" aria-label="Dettaglio vino">
+        </section>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer__inner">
+      <span>Le Cantine del Duca</span>
+      <span class="dot">•</span>
+      <span>Menù Digitale Offline Ready</span>
     </div>
-</main>
+  </footer>
 
-<main id="detailView" style="display:none;" class="wrap">
-  <div class="detailTop" style="margin-bottom:20px;">
-    <button id="backBtn" class="btn btn--ghost" style="padding:10px 0; background:none; border:none; cursor:pointer; font-weight:600; color:#4a0f1d;">← Indietro</button>
-  </div>
-  <section class="panel detail" id="detailCard" style="padding:20px;"></section>
-</main>
-
-<footer class="footer" style="padding: 40px 0; text-align: center; font-size: 13px; color: #999;">
-  <div class="footer__inner">
-    <span>CASA ISABELLA</span>
-    <span class="dot" style="margin: 0 8px;">•</span>
-    <span>Menù Digitale Offline Ready</span>
-  </div>
-</footer>
-
-<script src="./script.js"></script>
+  <script src="./script.js"></script>
 </body>
 </html>
