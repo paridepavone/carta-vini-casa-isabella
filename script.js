@@ -69,9 +69,7 @@ async function loadWines() {
     if (!res.ok) throw new Error(`Errore API: ${res.status}`);
 
     const data = await res.json();
-    console.log("Dati ricevuti da Supabase:", data); // Debug in console
-
-    // Mappatura con i nomi esatti delle tue colonne Supabase
+    
     ALL = data.map(w => ({
       id: String(w.id),
       titolo: normalizeText(w.titolo),
@@ -92,23 +90,18 @@ async function loadWines() {
 
     if (el.hint) el.hint.textContent = `In carta: ${ALL.length} etichette`;
   } catch (err) {
-    console.error("Errore Caricamento:", err);
-    if (el.hint) el.hint.textContent = "Errore nel caricamento dei vini.";
+    console.error("Errore:", err);
+    if (el.hint) el.hint.textContent = "Errore nel caricamento.";
   }
 }
 
-/* =========================
-   UI & FILTERING
-========================= */
 function hydrateFilters() {
   const getUniq = (key) => [...new Set(ALL.map(w => w[key]).filter(Boolean))].sort();
-  
-  fillSelect(el.tipologia, getUniq("tipologia"), "Tutte le tipologie");
-  fillSelect(el.luogo, getUniq("luogo"), "Tutte le regioni");
+  if (el.tipologia) fillSelect(el.tipologia, getUniq("tipologia"), "Tutte le tipologie");
+  if (el.luogo) fillSelect(el.luogo, getUniq("luogo"), "Tutte le regioni");
 }
 
 function fillSelect(select, options, firstLabel) {
-  if (!select) return;
   select.innerHTML = `<option value="">${firstLabel}</option>` + 
     options.map(o => `<option value="${o}">${o}</option>`).join("");
 }
@@ -132,7 +125,7 @@ function applyFilters() {
 function renderGrid() {
   if (!el.grid) return;
   el.grid.innerHTML = FILTERED.map(w => `
-    <div class="card" onclick="location.hash='#wine=${w.id}'">
+    <article class="card" onclick="location.hash='#wine=${w.id}'">
       <div class="card__img-container">
         ${w.immagine ? `<img src="${w.immagine}" class="card__img" loading="lazy">` : `<div class="card__placeholder">🍷</div>`}
       </div>
@@ -144,18 +137,14 @@ function renderGrid() {
           <span class="card__price">${fmtPrice(w.prezzo)}</span>
         </div>
       </div>
-    </div>
+    </article>
   `).join("");
 }
 
-/* =========================
-   ROUTING & DETAIL
-========================= */
 function handleRoute() {
   const hash = location.hash;
   if (hash.startsWith("#wine=")) {
-    const id = hash.split("=")[1];
-    showDetail(id);
+    showDetail(hash.split("=")[1]);
   } else {
     showList();
   }
@@ -169,38 +158,30 @@ function showList() {
 function showDetail(id) {
   const w = BY_ID.get(id);
   if (!w) return showList();
-
   if (el.listView) el.listView.style.display = "none";
   if (el.detailView) el.detailView.style.display = "block";
-
   if (el.detailCard) {
     el.detailCard.innerHTML = `
       <div class="detail">
         <img src="${w.immagine || ''}" class="detail__img">
         <h2 class="detail__title">${escapeHtml(w.titolo)}</h2>
         <p class="detail__cantina">${escapeHtml(w.cantina)}</p>
-        <div class="detail__meta">
-          <span>${escapeHtml(w.tipologia)}</span> | <span>${escapeHtml(w.luogo)}</span>
-        </div>
+        <div class="detail__meta"><span>${escapeHtml(w.tipologia)}</span> | <span>${escapeHtml(w.luogo)}</span></div>
         <p class="detail__desc">${escapeHtml(w.descrizione)}</p>
         <div class="detail__price">${fmtPrice(w.prezzo)}</div>
-      </div>
-    `;
+      </div>`;
   }
 }
 
 /* =========================
    INITIALIZATION
 ========================= */
-function init() {
+(function init() {
   if (el.q) el.q.oninput = applyFilters;
   if (el.tipologia) el.tipologia.onchange = applyFilters;
   if (el.luogo) el.luogo.onchange = applyFilters;
   if (el.backBtn) el.backBtn.onclick = () => location.hash = "";
   if (el.resetBtn) el.resetBtn.onclick = () => { if(el.q) el.q.value=""; applyFilters(); };
-  
   window.onhashchange = handleRoute;
   loadWines();
-}
-
-init();
+})();
