@@ -39,43 +39,34 @@
         <div class="brand__sub">Carta Vini Digitale</div>
       </div>
     </div>
-    <div class="topbar__right">
-      <div class="pill">
-        Etichette: <strong id="countPill">0</strong>
-      </div>
-    </div>
+    <div class="status"><span id="countPill">0</span> etichette</div>
   </div>
 </header>
 
-<main class="wrap">
+<main class="wrap" id="listView">
   <section class="panel">
-    <div class="panel__head">
-      <h2>I Nostri Vini</h2>
-      <p>Esplora la nostra selezione curata</p>
-    </div>
-    <div class="filters">
-      <div class="filters__grid">
-        <div class="field field--wide">
-          <label>Ricerca</label>
-          <input type="text" id="q" placeholder="Nome vino o cantina...">
-        </div>
-        <div class="field">
-          <label>Tipologia</label>
-          <select id="tipologia"><option value="">Tutte</option></select>
-        </div>
-        <div class="field">
-          <label>Regione</label>
-          <select id="luogo"><option value="">Tutte</option></select>
-        </div>
-        <div class="actions">
-          <button class="btn btn--soft" id="resetBtn">Reset</button>
-        </div>
+    <div class="filters__grid">
+      <div class="field">
+        <label>Ricerca</label>
+        <input type="text" id="q" placeholder="Cerca vino...">
+      </div>
+      <div class="field">
+        <label>Tipologia</label>
+        <select id="tipologia"></select>
+      </div>
+      <div class="field">
+        <label>Regione</label>
+        <select id="luogo"></select>
       </div>
     </div>
+    <div id="hint" style="text-align:center; font-size:10px; padding-bottom:10px; color:#999;"></div>
   </section>
+  <div class="grid" id="grid"></div>
+</main>
 
-  <div class="grid" id="grid">
-    </div>
+<main id="detailView" style="display:none;" class="wrap">
+  <button id="backBtn" class="btn" style="margin-bottom:20px;">← Indietro</button>
+  <div class="panel" id="detailCard" style="padding:20px;"></div>
 </main>
 
   <footer class="footer">
