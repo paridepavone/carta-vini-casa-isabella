@@ -1,5 +1,5 @@
 /* =========================
-   THEME - CASA ISABELLA (ORIGINALE)
+   THEME - CASA ISABELLA (FEDELE ALL'ORIGINALE)
 ========================= */
 :root{
   --bg: #ffffff;
@@ -7,24 +7,20 @@
   --text: #151517;
   --muted: #6b6f76;
   --line: #e7e7ea;
-
   --bordeaux: #4a0f1d;
   --gold: #b79a57;
   --grey: #f4f5f7;
-
   --shadow: 0 10px 30px rgba(0,0,0,.07);
   --radius: 18px;
   --radius-sm: 14px;
-
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
   --font-serif: "Playfair Display", Georgia, serif;
-
   --field-h: 46px;
   --field-font: 15px;
 }
 
 *{ box-sizing: border-box; }
-html,body{ height:100%; margin:0; }
+html,body{ height:100%; margin:0; padding:0; }
 
 body{
   background: linear-gradient(180deg, #fff, #fff 260px, #fbfbfc);
@@ -34,7 +30,7 @@ body{
 }
 
 /* =========================
-   LAYOUT & TOPBAR
+   TOPBAR & BRAND (FISSI E COMPATTI)
 ========================= */
 .topbar{
   position: sticky;
@@ -44,38 +40,38 @@ body{
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--line);
-  padding: 12px 0;
+  padding: 10px 0;
 }
 
 .wrap{
   max-width: 1100px;
   margin: 0 auto;
-  padding: 0 18px;
+  padding: 0 15px; /* Padding ridotto per mobile */
 }
 
 .brand{
   font-family: var(--font-serif);
-  font-size: 24px;
+  font-size: 22px; /* Dimensione originale perfetta */
   font-weight: 700;
   color: var(--bordeaux);
   text-align: center;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
   letter-spacing: -0.5px;
 }
 
 /* =========================
-   FILTRI (PROPORZIONI ORIGINALI)
+   FILTRI (PROPORZIONI WEB APP)
 ========================= */
 .search-container {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .filter-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 8px;
 }
 
 input, select {
@@ -84,33 +80,35 @@ input, select {
   border-radius: 12px;
   padding: 0 12px;
   font-size: var(--field-font);
-  font-family: inherit;
   outline: none;
   background-color: #fff;
-  transition: border-color .2s;
-}
-
-input:focus, select:focus {
-  border-color: var(--gold);
+  appearance: none; /* Rimuove stile default mobile */
+  -webkit-appearance: none;
 }
 
 #hint {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--muted);
   text-align: center;
-  margin-top: 8px;
+  margin-top: 6px;
   text-transform: uppercase;
   letter-spacing: 1px;
 }
 
 /* =========================
-   GRID & CARDS (STILE CHE AMI)
+   GRID & CARDS (OTTIMIZZATE SMARTPHONE)
 ========================= */
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 20px;
-  padding: 24px 0;
+  padding: 20px 0;
+}
+
+/* Forza 1 colonna su smartphone per leggibilità */
+@media (max-width: 600px) {
+  .grid { grid-template-columns: 1fr; }
+  .brand { font-size: 20px; }
 }
 
 .card {
@@ -118,15 +116,13 @@ input:focus, select:focus {
   border: 1px solid var(--line);
   border-radius: var(--radius);
   overflow: hidden;
+  box-shadow: var(--shadow);
   transition: transform .2s ease;
   cursor: pointer;
-  box-shadow: var(--shadow);
 }
 
-.card:active { transform: scale(0.98); }
-
 .card__img-container {
-  height: 240px;
+  height: 220px;
   background: var(--grey);
   display: flex;
   align-items: center;
@@ -137,20 +133,72 @@ input:focus, select:focus {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
-  padding: 20px;
+  padding: 15px;
 }
 
-.card__content { padding: 20px; }
+.card__content { padding: 18px; }
 
 .card__title {
   font-family: var(--font-serif);
-  font-size: 22px;
+  font-size: 20px;
   margin: 0 0 4px 0;
   color: var(--text);
 }
 
 .card__subtitle {
-  font-size: 14px;
+  font-size: 13px;
   color: var(--muted);
-  margin-bottom: 14px;
+  margin-bottom: 12px;
   display: block;
+}
+
+.card__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px dashed var(--line);
+}
+
+.card__type {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gold);
+  text-transform: uppercase;
+}
+
+.card__price {
+  font-weight: 700;
+  color: var(--bordeaux);
+  font-size: 17px;
+}
+
+/* =========================
+   DETTAGLIO (FULL SCREEN MOBILE)
+========================= */
+.detail-view {
+  position: fixed;
+  inset: 0;
+  background: #fff;
+  z-index: 200;
+  overflow-y: auto;
+  padding: 15px;
+}
+
+.back-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 15px;
+  background: #fff;
+}
+
+.detail { max-width: 500px; margin: 0 auto; }
+.detail__img { width: 100%; max-height: 300px; object-fit: contain; margin-bottom: 20px; }
+.detail__title { font-family: var(--font-serif); font-size: 26px; margin-bottom: 5px; }
+.detail__cantina { color: var(--gold); font-style: italic; margin-bottom: 15px; }
+.detail__price { font-size: 26px; font-weight: 800; color: var(--bordeaux); text-align: right; }
