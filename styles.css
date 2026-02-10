@@ -62,14 +62,26 @@ body{
 
 .brand{ display: flex; align-items: center; gap: 12px; text-decoration: none; }
 .brand__logo {
-  width: 44px; /* Dimensione originale */
-  height: 44px;
-  background-image: url('./logo.png'); /* Carica il tuo file PNG */
-  background-size: contain;
+  width: 42px;
+  height: 42px;
+  background-color: var(--bordeaux); /* Sfondo bordeaux originale */
+  background-image: url('./logo.png'); /* Il tuo file */
+  background-size: 70%; /* Ridimensiona il PNG dentro il quadratino */
   background-repeat: no-repeat;
   background-position: center;
   border-radius: 12px;
+  position: relative;
   flex-shrink: 0;
+}
+
+/* La cornice dorata sottile che avevi nell'originale */
+.brand__logo::after {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border: 1px solid rgba(183,154,87,0.3);
+  border-radius: 8px;
+  pointer-events: none;
 }
 
 .brand__name{
