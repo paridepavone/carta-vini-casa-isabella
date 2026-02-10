@@ -1,545 +1,254 @@
-/* =========================
-   THEME
-========================= */
-:root{
-  --bg: #ffffff;
-  --surface: #ffffff;
-  --text: #151517;
-  --muted: #6b6f76;
-  --line: #e7e7ea;
-
-  --bordeaux: #4a0f1d;
-  --gold: #b79a57;
-  --grey: #f4f5f7;
-
-  --shadow: 0 10px 30px rgba(0,0,0,.07);
-  --radius: 18px;
-  --radius-sm: 14px;
-
-  --font-sans: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  --font-serif: "Playfair Display", Georgia, serif;
+/* =========================================
+   RESET & VARIABILI
+   ========================================= */
+:root {
+  --primary: #800020; /* Rosso Vinaccia */
+  --text: #1a1a1a;
+  --text-light: #666;
+  --bg: #f8f7f5; /* Grigio carta avorio */
+  --card-bg: #ffffff;
+  --shadow: 0 4px 20px rgba(0,0,0,0.08);
+  --radius: 12px;
 }
 
-*{ box-sizing: border-box; }
-html,body{ height:100%; }
-body{
-  margin:0;
-  background: linear-gradient(180deg, #fff, #fff 260px, #fbfbfc);
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--bg);
   color: var(--text);
-  font-family: var(--font-sans);
+  line-height: 1.5;
 }
 
-/* =========================
-   LAYOUT
-========================= */
-.wrap{
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 18px 18px 48px;
-}
-
-/* =========================
-   TOPBAR
-========================= */
-.topbar{
+/* =========================================
+   HEADER & FILTRI
+   ========================================= */
+header {
+  background: var(--card-bg);
+  padding: 20px;
   position: sticky;
   top: 0;
-  z-index: 20;
-  background: rgba(255,255,255,.82);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--line);
+  z-index: 100;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
-.topbar__inner{
-  max-width: 1100px;
+
+.search-container {
+  max-width: 800px;
   margin: 0 auto;
-  padding: 14px 18px;
-  display:flex;
-  align-items:center;
-  justify-content: space-between;
-  gap: 16px;
 }
 
-.brand{
-  display:flex;
-  align-items:center;
-  gap: 12px;
-  min-width: 220px;
-}
-.brand__logo{
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  background: rgb
-  (42, 7, 15, );
-  position: relative;
-}
-.brand__logo::after{
-  content:"";
-  position:absolute;
-  inset: 10px;
-  border-radius: 10px;
-  border: 1px solid rgb(5, 3, 0, 0.45);
-}
-.brand__name{
-  font-family: var(--font-serif);
-  font-size: 22px;
-  letter-spacing: .2px;
-}
-.brand__sub{
-  font-size: 12px;
-  color: var(--muted);
-  margin-top: 2px;
-}
-
-.topbar__right{
-  display:flex;
-  align-items:center;
-  gap: 12px;
-}
-.status{
-  font-size: 12px;
-  color: var(--muted);
-  max-width: 320px;
-  text-align:right;
-}
-
-.pill{
-  display:flex;
-  align-items:center;
-  gap: 8px;
-  padding: 10px 12px;
-  border-radius: 999px;
-  border: 1px solid var(--line);
-  background: #fff;
-  box-shadow: 0 8px 18px rgba(0,0,0,.05);
-  font-size: 12px;
-  color: var(--muted);
-}
-.pill strong{
-  color: var(--bordeaux);
-  font-weight: 700;
-  font-size: 13px;
-}
-
-/* =========================
-   PANEL
-========================= */
-.panel{
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-}
-
-.panel__head{
-  padding: 18px 18px 0;
-}
-.panel__head h2{
-  margin:0;
-  font-family: var(--font-serif);
-  font-size: 22px;
-}
-.panel__head p{
-  margin: 8px 0 0;
-  color: var(--muted);
-  font-size: 13px;
-}
-
-/* =========================
-   FILTERS
-========================= */
-.filters{
-  padding-bottom: 18px;
-}
-
-.filters__grid{
-  display:grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr;
-  gap: 12px;
-  padding: 16px 18px 0;
-}
-
-.field{
-  display:flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.field--wide{
-  grid-column: span 2;
-}
-
-label{
-  font-size: 12px;
-  color: var(--muted);
-}
-
-input, select{
-  width:100%;
-  border: 1px solid var(--line);
-  background: #fff;
-  border-radius: 14px;
-  padding: 12px 12px;
-  font-family: var(--font-sans);
-  outline: none;
-  transition: box-shadow .15s ease, border-color .15s ease;
-}
-input:focus, select:focus{
-  border-color: rgba(183,154,87,.55);
-  box-shadow: 0 0 0 4px rgba(183,154,87,.15);
-}
-
-.actions{
-  display:flex;
-  align-items:flex-end;
-  justify-content:flex-end;
-  grid-column: span 6;
-  gap: 10px;
-  padding-top: 6px;
-}
-
-/* =========================
-   BUTTONS
-========================= */
-.btn{
-  border: 1px solid var(--line);
-  background: #fff;
-  border-radius: 999px;
-  padding: 10px 14px;
-  font-family: var(--font-sans);
-  font-weight: 600;
-  cursor: pointer;
-  transition: transform .08s ease, box-shadow .15s ease, border-color .15s ease;
-}
-.btn:hover{
-  border-color: rgba(183,154,87,.45);
-  box-shadow: 0 10px 20px rgba(0,0,0,.06);
-}
-.btn:active{ transform: translateY(1px); }
-
-.btn--ghost{
-  background: #fff;
-}
-
-.btn--soft{
-  background: linear-gradient(180deg, #fff, #fbfbfc);
-}
-
-/* =========================
-   GRID / CARDS
-========================= */
-.grid{
-  margin-top: 16px;
-  display:grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
-}
-
-.card{
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: #fff;
-  box-shadow: 0 10px 26px rgba(0,0,0,.06);
-  overflow:hidden;
-  cursor:pointer;
-  transition: transform .12s ease, box-shadow .2s ease, border-color .2s ease;
-}
-.card:hover{
-  transform: translateY(-2px);
-  border-color: rgba(183,154,87,.45);
-  box-shadow: 0 16px 40px rgba(0,0,0,.09);
-}
-.card:focus{
-  outline:none;
-  box-shadow: 0 0 0 4px rgba(74,15,29,.12), 0 16px 40px rgba(0,0,0,.09);
-}
-
-.card__img{
-  width:100%;
-  height: 170px;
-  object-fit: cover;
-  display:block;
-  background: var(--grey);
-}
-.card__img--ph{
-  height: 170px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:
-    radial-gradient(60% 70% at 35% 20%, rgba(183,154,87,.18), rgba(183,154,87,0)),
-    linear-gradient(180deg, #fff, #f7f7f9);
-  border-bottom: 1px solid var(--line);
-}
-.ph__mark{
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background: rgba(74,15,29,.08);
-  border: 1px solid rgba(183,154,87,.35);
-  font-size: 22px;
-}
-
-.card__body{
-  padding: 14px 14px 16px;
-}
-.card__top{
-  display:flex;
-  justify-content: space-between;
-  gap: 10px;
-  align-items:flex-start;
-}
-.card__title{
-  margin:0;
-  font-family: var(--font-serif);
-  font-size: 18px;
-  line-height: 1.1;
-}
-.card__price{
-  color: var(--bordeaux);
-  font-weight: 800;
-  letter-spacing: .2px;
-  white-space: nowrap;
-}
-.card__meta{
-  margin-top: 8px;
-  color: var(--muted);
-  font-size: 12px;
-}
-.card__uvaggio{
-  margin-top: 10px;
-  font-size: 12px;
-  color: #2a2c31;
-  padding-top: 10px;
-  border-top: 1px dashed rgba(183,154,87,.35);
-}
-
-/* Empty */
-.empty{
-  grid-column: 1 / -1;
-  padding: 22px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: #fff;
-  box-shadow: var(--shadow);
-}
-.empty__title{
-  font-family: var(--font-serif);
-  font-size: 18px;
-  margin-bottom: 6px;
-}
-.empty__text{
-  color: var(--muted);
-  font-size: 13px;
-}
-
-/* =========================
-   DETAIL VIEW
-========================= */
-.detailTop{
-  margin: 10px 0 14px;
-  display:flex;
-  justify-content:flex-start;
-}
-.detail{
-  padding: 18px;
-}
-
-.detail-card__inner{
-  display:grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 18px;
-}
-
-.detail-media__img{
+input, select {
   width: 100%;
-  height: 340px;
-  object-fit: cover;
-  border-radius: 16px;
-  border: 1px solid var(--line);
-  background: var(--grey);
-}
-.detail-media__img--ph{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:
-    radial-gradient(60% 70% at 35% 20%, rgba(183,154,87,.18), rgba(183,154,87,0)),
-    linear-gradient(180deg, #fff, #f7f7f9);
+  padding: 12px 15px;
+  margin-bottom: 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: var(--radius);
+  font-size: 16px; /* Evita zoom automatico su iPhone */
+  background: #fdfdfd;
 }
 
-.detail-head{
-  display:flex;
-  justify-content: space-between;
-  align-items:flex-start;
-  gap: 12px;
-}
-.detail-title{
-  margin:0;
-  font-family: var(--font-serif);
-  font-size: 30px;
-  line-height: 1.05;
-}
-.detail-price{
-  font-weight: 900;
-  color: var(--bordeaux);
-  font-size: 22px;
-  white-space: nowrap;
-}
-
-.detail-badges{
-  display:flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 12px 0 10px;
-}
-.badge{
-  border: 1px solid rgba(183,154,87,.4);
-  background: rgba(183,154,87,.10);
-  color: #2a2c31;
-  padding: 6px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-}
-
-.detail-desc{
-  margin: 10px 0 14px;
-  color: #2a2c31;
-  font-size: 14px;
-  line-height: 1.6;
-}
-
-.detail-actions{
-  display:flex;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.detail-small{
-  margin-top: 12px;
-  color: var(--muted);
-  font-size: 12px;
-}
-code{
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 12px;
-  background: #f5f5f7;
-  border: 1px solid var(--line);
-  padding: 2px 6px;
-  border-radius: 8px;
-}
-
-/* =========================
-   FOOTER
-========================= */
-.footer{
-  margin-top: 22px;
-  color: var(--muted);
-  font-size: 12px;
-}
-.footer__inner{
-  display:flex;
-  align-items:center;
-  justify-content:center;
+.filter-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 10px;
 }
-.dot{ opacity:.6; }
 
-/* =========================
-   RESPONSIVE
-========================= */
-@media (max-width: 980px){
-  .filters__grid{
-    grid-template-columns: 1fr 1fr;
-  }
-  .field--wide{ grid-column: span 2; }
-  .actions{ grid-column: span 2; }
-  .grid{ grid-template-columns: repeat(2, 1fr); }
-  .detail-card__inner{ grid-template-columns: 1fr; }
-  .detail-media__img{ height: 260px; }
-}
-@media (max-width: 560px){
-  .topbar__inner{ flex-direction: column; align-items:flex-start; }
-  .topbar__right{ width:100%; justify-content: space-between; }
-  .grid{ grid-template-columns: 1fr; }
+#hint {
+  font-size: 0.85rem;
+  color: var(--text-light);
+  text-align: center;
+  margin-top: 5px;
 }
 
-/* =========================
-   FIX SELECT / DROPDOWN
-========================= */
-
-/* Tutti i campi (input + select) identici */
-:root{
-  --field-h: 44px;
-  --field-font: 16px;
+/* =========================================
+   GRID VINI (LISTA)
+   ========================================= */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
+  gap: 20px;
+  padding: 20px;
+  max-width: 1000px;
+  margin: 0 auto;
 }
 
-/* Wrapper (se hai .field / .filters / ecc. ok lo stesso) */
-input, select{
-  font: inherit;
-}
-
-/* INPUT */
-input[type="text"],
-input[type="search"],
-input[type="number"]{
-  height: var(--field-h);
-  line-height: var(--field-h);
-  font-size: var(--field-font);
-  padding: 0 12px;
-}
-
-/* SELECT: “centrato” e coerente */
-select{
-  height: var(--field-h);
-  font-size: var(--field-font);
-  line-height: normal;              /* evita micro-font su alcune UI */
-  padding: 0 40px 0 12px;           /* spazio per freccia a destra */
+.card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   display: flex;
-  align-items: center;              /* aiuta il rendering su alcuni browser */
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-
-  background-color: #fff;
-  border: 1px solid rgba(0,0,0,.12);
-  border-radius: 12px;
-  color: #1b1b1b;
-
-  /* Freccia custom (così non “balla”) */
-  background-image:
-    linear-gradient(45deg, transparent 50%, rgba(0,0,0,.55) 50%),
-    linear-gradient(135deg, rgba(0,0,0,.55) 50%, transparent 50%),
-    linear-gradient(to right, transparent, transparent);
-  background-position:
-    calc(100% - 18px) 50%,
-    calc(100% - 12px) 50%,
-    100% 0;
-  background-size:
-    6px 6px,
-    6px 6px,
-    44px 100%;
-  background-repeat: no-repeat;
+  flex-direction: column;
 }
 
-/* Option: su iOS/macOS spesso non si controlla al 100%, ma questa aiuta */
-select option{
-  font-size: 16px;
+.card:active {
+  transform: scale(0.96);
 }
 
-/* Focus bello e leggibile */
-select:focus,
-input:focus{
-  outline: none;
-  border-color: rgba(140, 108, 82, .55);  /* oro caldo */
-  box-shadow: 0 0 0 3px rgba(140,108,82,.18);
+.card__img-container {
+  width: 100%;
+  aspect-ratio: 1 / 1.2; /* Leggermente verticale per le bottiglie */
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid #f5f5f5;
+  padding: 10px;
 }
 
-/* Se i campi stanno “bassi” rispetto all’etichetta */
-.filters .field,
-.filters label{
-  line-height: 1.1;
+.card__img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain; /* Mantiene la bottiglia intera */
 }
 
+.card__placeholder {
+  font-size: 3rem;
+  opacity: 0.3;
+}
+
+.card__content {
+  padding: 15px;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.card__title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+  line-height: 1.2;
+}
+
+.card__subtitle {
+  font-size: 0.85rem;
+  color: var(--primary);
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+
+.card__footer {
+  margin-top: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+}
+
+.card__type {
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.card__price {
+  font-weight: 800;
+  font-size: 1rem;
+}
+
+/* =========================================
+   SCHEDA DETTAGLIO (VINO SINGOLO)
+   ========================================= */
+.detail-view {
+  background: var(--card-bg);
+  min-height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 200;
+  overflow-y: auto;
+  padding-bottom: 50px;
+}
+
+.back-btn {
+  position: sticky;
+  top: 20px;
+  left: 20px;
+  background: rgba(255,255,255,0.9);
+  border: 1px solid #ddd;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  cursor: pointer;
+  z-index: 210;
+  font-size: 1.2rem;
+}
+
+.detail {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.detail__img {
+  width: 100%;
+  max-height: 450px;
+  object-fit: contain;
+  margin-bottom: 30px;
+}
+
+.detail__title {
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.detail__cantina {
+  font-size: 1.2rem;
+  color: var(--primary);
+  margin-bottom: 20px;
+  font-weight: 500;
+}
+
+.detail__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 25px;
+}
+
+.detail__meta span {
+  background: #f0f0f0;
+  padding: 6px 15px;
+  border-radius: 30px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-light);
+}
+
+.detail__desc {
+  font-size: 1.1rem;
+  line-height: 1.7;
+  color: #444;
+  margin-bottom: 30px;
+}
+
+.detail__price {
+  font-size: 2rem;
+  font-weight: 800;
+  padding-top: 20px;
+  border-top: 2px solid #f5f5f5;
+  text-align: right;
+}
+
+/* =========================================
+   VUOTO & ERRORI
+   ========================================= */
+.empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 50px;
+  color: var(--text-light);
+}
