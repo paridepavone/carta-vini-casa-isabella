@@ -1,0 +1,22 @@
+{
+  "name": "Casa Isabella - Carta Vini",
+  "short_name": "ViniIsabella",
+  "description": "Menù digitale della cantina di Casa Isabella",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4a0f1d",
+  "icons": [
+    {
+      "src": "logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
