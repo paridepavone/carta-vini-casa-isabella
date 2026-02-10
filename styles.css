@@ -1,5 +1,5 @@
 /* =========================
-   THEME - CASA ISABELLA (FEDELE ALL'ORIGINALE)
+   THEME & VARIABILI ORIGINALI
 ========================= */
 :root{
   --bg: #ffffff;
@@ -7,20 +7,24 @@
   --text: #151517;
   --muted: #6b6f76;
   --line: #e7e7ea;
+
   --bordeaux: #4a0f1d;
   --gold: #b79a57;
   --grey: #f4f5f7;
+
   --shadow: 0 10px 30px rgba(0,0,0,.07);
   --radius: 18px;
   --radius-sm: 14px;
+
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
   --font-serif: "Playfair Display", Georgia, serif;
-  --field-h: 46px;
-  --field-font: 15px;
+  
+  --field-h: 44px;
+  --field-font: 16px;
 }
 
 *{ box-sizing: border-box; }
-html,body{ height:100%; margin:0; padding:0; }
+html, body { height: 100%; margin: 0; padding: 0; }
 
 body{
   background: linear-gradient(180deg, #fff, #fff 260px, #fbfbfc);
@@ -30,7 +34,7 @@ body{
 }
 
 /* =========================
-   TOPBAR & BRAND (FISSI E COMPATTI)
+   TOPBAR & BRAND (PROPORZIONI ORIGINALI)
 ========================= */
 .topbar{
   position: sticky;
@@ -40,75 +44,100 @@ body{
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--line);
-  padding: 10px 0;
 }
 
-.wrap{
+.topbar__inner{
   max-width: 1100px;
   margin: 0 auto;
-  padding: 0 15px; /* Padding ridotto per mobile */
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .brand{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand__logo{
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--bordeaux);
+  position: relative;
+}
+
+.brand__logo::after{
+  content:"";
+  position: absolute;
+  inset: 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(183,154,87,0.4);
+}
+
+.brand__name{
   font-family: var(--font-serif);
-  font-size: 22px; /* Dimensione originale perfetta */
+  font-size: 20px;
   font-weight: 700;
   color: var(--bordeaux);
-  text-align: center;
-  margin-bottom: 12px;
   letter-spacing: -0.5px;
 }
 
+.brand__sub{
+  font-size: 11px;
+  color: var(--muted);
+}
+
 /* =========================
-   FILTRI (PROPORZIONI WEB APP)
+   LAYOUT & FILTRI
 ========================= */
-.search-container {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.wrap{
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 15px;
 }
 
-.filter-row {
+.panel{
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  margin-bottom: 20px;
+}
+
+.panel__head{ padding: 18px 18px 0; }
+.panel__head h2{ font-family: var(--font-serif); font-size: 22px; margin: 0; }
+.panel__head p{ color: var(--muted); font-size: 13px; margin: 5px 0 0; }
+
+.filters__grid{
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 12px;
+  padding: 15px 18px;
 }
 
-input, select {
+.field{ display: flex; flex-direction: column; gap: 6px; }
+label{ font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+input, select{
   height: var(--field-h);
-  border: 1px solid rgba(0,0,0,.12);
+  border: 1px solid var(--line);
   border-radius: 12px;
   padding: 0 12px;
   font-size: var(--field-font);
   outline: none;
-  background-color: #fff;
-  appearance: none; /* Rimuove stile default mobile */
-  -webkit-appearance: none;
-}
-
-#hint {
-  font-size: 10px;
-  color: var(--muted);
-  text-align: center;
-  margin-top: 6px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  background: #fff;
 }
 
 /* =========================
-   GRID & CARDS (OTTIMIZZATE SMARTPHONE)
+   GRID & CARDS (CLONATE DALL'ORIGINALE)
 ========================= */
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 20px;
-  padding: 20px 0;
-}
-
-/* Forza 1 colonna su smartphone per leggibilità */
-@media (max-width: 600px) {
-  .grid { grid-template-columns: 1fr; }
-  .brand { font-size: 20px; }
 }
 
 .card {
@@ -117,12 +146,14 @@ input, select {
   border-radius: var(--radius);
   overflow: hidden;
   box-shadow: var(--shadow);
-  transition: transform .2s ease;
   cursor: pointer;
+  transition: transform .15s ease;
 }
 
+.card:active { transform: scale(0.97); }
+
 .card__img-container {
-  height: 220px;
+  height: 200px;
   background: var(--grey);
   display: flex;
   align-items: center;
@@ -136,45 +167,53 @@ input, select {
   padding: 15px;
 }
 
-.card__content { padding: 18px; }
+.card__body { padding: 18px; }
+
+.card__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
 
 .card__title {
   font-family: var(--font-serif);
-  font-size: 20px;
-  margin: 0 0 4px 0;
-  color: var(--text);
-}
-
-.card__subtitle {
-  font-size: 13px;
-  color: var(--muted);
-  margin-bottom: 12px;
-  display: block;
-}
-
-.card__footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: 12px;
-  border-top: 1px dashed var(--line);
-}
-
-.card__type {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--gold);
-  text-transform: uppercase;
+  font-size: 19px;
+  margin: 0;
+  line-height: 1.2;
 }
 
 .card__price {
-  font-weight: 700;
   color: var(--bordeaux);
+  font-weight: 800;
   font-size: 17px;
 }
 
+.card__meta {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
 /* =========================
-   DETTAGLIO (FULL SCREEN MOBILE)
+   RESPONSIVE SMARTPHONE
+========================= */
+@media (max-width: 600px) {
+  .grid { grid-template-columns: 1fr; } /* Card singola per riga su mobile */
+  
+  .topbar__inner { padding: 10px 15px; }
+  .brand__name { font-size: 18px; }
+  .brand__logo { width: 34px; height: 34px; }
+  
+  .filters__grid {
+    grid-template-columns: 1fr; /* Filtri impilati su mobile */
+  }
+  
+  .brand__sub, .status { display: none; }
+}
+
+/* =========================
+   DETAIL VIEW
 ========================= */
 .detail-view {
   position: fixed;
@@ -199,6 +238,5 @@ input, select {
 
 .detail { max-width: 500px; margin: 0 auto; }
 .detail__img { width: 100%; max-height: 300px; object-fit: contain; margin-bottom: 20px; }
-.detail__title { font-family: var(--font-serif); font-size: 26px; margin-bottom: 5px; }
-.detail__cantina { color: var(--gold); font-style: italic; margin-bottom: 15px; }
+.detail__title { font-family: var(--font-serif); font-size: 26px; }
 .detail__price { font-size: 26px; font-weight: 800; color: var(--bordeaux); text-align: right; }
