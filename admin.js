@@ -10,7 +10,7 @@
 ========================= */
 const SUPABASE_URL = "https://bxdermzgfunwpvgektnz.supabase.co";
 // ✅ usa ANON PUBLIC key (NON service role) in frontend
-const SUPABASE_ANON_KEY = "INCOLLA_LA_TUA_ANON_PUBLIC_KEY_QUI";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ4ZGVybXpnZnVud3B2Z2VrdG56Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3MDk1NzksImV4cCI6MjA4NjI4NTU3OX0.yIr_RtG2WDDl09l5MY2MWFd2PnnoE0L3c0uVxBBzQCE";
 
 const TABLE = "vini";
 
