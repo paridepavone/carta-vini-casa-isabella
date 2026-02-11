@@ -14,10 +14,9 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const TABLE = "vini";
 
-/* =========================
-   CLIENT
-========================= */
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Evita collisioni e doppie dichiarazioni se lo script viene caricato 2 volte
+window.__CANTINA_SB__ = window.__CANTINA_SB__ || window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const sb = window.__CANTINA_SB__;
 
 /* =========================
    STATE
