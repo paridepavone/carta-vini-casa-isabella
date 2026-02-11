@@ -6,228 +6,192 @@
   <title>Admin — Le Cantine del Duca</title>
 
   <meta name="theme-color" content="#4a0f1d">
+  <link rel="apple-touch-icon" href="logo.png">
   <link rel="stylesheet" href="./styles.css" />
 
-  <!-- Supabase JS via CDN -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Supabase JS v2 -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <style>
-    /* Piccoli extra SOLO per admin (resta pulito) */
-    .admin-shell{ display:grid; grid-template-columns: 360px 1fr; gap:14px; }
-    .admin-card{ padding:16px; }
-    .admin-title{ font-family: var(--font-serif); font-size:22px; margin:0 0 6px; }
-    .admin-sub{ color: var(--muted); font-size:13px; margin:0 0 14px; line-height:1.5; }
-    .admin-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
-    .table{ width:100%; border-collapse: collapse; }
-    .table th, .table td{ padding:10px 10px; border-bottom:1px solid var(--line); font-size:13px; vertical-align:top; }
-    .table th{ color: var(--muted); font-weight:700; text-align:left; font-size:12px; }
-    .row-actions{ display:flex; gap:8px; justify-content:flex-end; }
-    .btn--danger{ border-color: rgba(74,15,29,.25); }
-    .btn--danger:hover{ border-color: rgba(74,15,29,.55); }
-
-    .modal{ position:fixed; inset:0; background:rgba(0,0,0,.35); display:none; align-items:center; justify-content:center; padding:18px; z-index:999; }
-    .modal.is-open{ display:flex; }
-    .modal__panel{ width:min(860px, 100%); background:#fff; border:1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
-    .modal__head{ padding:14px 16px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; gap:12px; }
-    .modal__head h3{ margin:0; font-family: var(--font-serif); font-size:20px; }
-    .modal__body{ padding:16px; }
-    .modal__grid{ display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
-    .modal__grid .field--span2{ grid-column: 1 / -1; }
-    .modal__foot{ padding:14px 16px; border-top:1px solid var(--line); display:flex; justify-content:flex-end; gap:10px; }
-
-    @media (max-width: 980px){
-      .admin-shell{ grid-template-columns: 1fr; }
-      .modal__grid{ grid-template-columns: 1fr; }
-    }
-  </style>
 </head>
 
 <body>
   <header class="topbar">
     <div class="topbar__inner">
       <div class="brand">
-        <img src="./logo.png" alt="Logo Le Cantine del Duca" class="brand__logo">
+        <img src="logo.png" alt="Logo" class="brand__logo">
         <div class="brand__txt">
           <div class="brand__name">Le Cantine del Duca</div>
-          <div class="brand__sub">Admin • gestione carta vini</div>
+          <div class="brand__sub">Admin — gestione vini</div>
         </div>
       </div>
 
       <div class="topbar__right">
         <div class="status" id="hint">—</div>
         <div class="pill">
-          <span>Totale</span>
+          <span>Vini</span>
           <strong id="countPill">0</strong>
         </div>
+        <button class="btn btn--soft" id="logoutBtn" type="button" style="display:none;">Esci</button>
       </div>
     </div>
   </header>
 
   <main class="wrap">
-    <div class="admin-shell">
-      <!-- LOGIN / AZIONI -->
-      <section class="panel admin-card" aria-label="Pannello admin">
-        <h2 class="admin-title">Accesso</h2>
-        <p class="admin-sub">
-          Effettua il login per modificare la carta vini.<br>
-          Le modifiche sono salvate su Supabase.
+    <!-- LOGIN -->
+    <section class="panel admin-auth" id="authBox">
+      <div class="panel__head">
+        <h2>Accesso</h2>
+        <p>Accedi con email e password (Supabase Auth).</p>
+      </div>
+
+      <div class="auth__grid">
+        <div class="field field--wide">
+          <label for="email">Email</label>
+          <input id="email" type="email" placeholder="nome@dominio.it" autocomplete="email">
+        </div>
+
+        <div class="field field--wide">
+          <label for="password">Password</label>
+          <input id="password" type="password" placeholder="••••••••" autocomplete="current-password">
+        </div>
+
+        <div class="actions auth__actions">
+          <button class="btn btn--ghost" id="loginBtn" type="button">Accedi</button>
+          <button class="btn btn--soft" id="signupBtn" type="button" title="Solo se vuoi creare utenti da qui">Crea utente</button>
+        </div>
+
+        <p class="auth__note">
+          Suggerimento: crea gli utenti da Supabase → Authentication → Users, poi qui fai login.
         </p>
+      </div>
+    </section>
 
-        <div id="authBox">
+    <!-- APP -->
+    <section id="app" style="display:none;">
+      <section class="panel filters" aria-label="Filtri admin">
+        <div class="panel__head">
+          <h2>Archivio vini</h2>
+          <p>Cerca, modifica e aggiungi etichette.</p>
+        </div>
+
+        <div class="filters__grid">
+          <div class="field field--full">
+            <label for="q">Cerca</label>
+            <input id="q" type="search" placeholder="Titolo, cantina, territorio..." />
+          </div>
+
           <div class="field">
-            <label for="email">Email</label>
-            <input id="email" type="email" placeholder="email@dominio.it" autocomplete="email">
+            <label for="tipologia">Tipologia</label>
+            <select id="tipologia"><option value="">Tutte</option></select>
           </div>
 
-          <div class="field" style="margin-top:10px;">
-            <label for="password">Password</label>
-            <input id="password" type="password" placeholder="••••••••" autocomplete="current-password">
+          <div class="field">
+            <label for="luogo">Territorio</label>
+            <select id="luogo"><option value="">Tutti</option></select>
           </div>
 
-          <div class="admin-actions">
-            <button class="btn btn--soft" id="loginBtn" type="button">Login</button>
-            <button class="btn btn--ghost" id="logoutBtn" type="button" style="display:none;">Logout</button>
+          <div class="field">
+            <label for="uvaggio">Uvaggio</label>
+            <select id="uvaggio"><option value="">Tutti</option></select>
           </div>
-        </div>
 
-        <hr style="border:none;border-top:1px solid var(--line); margin:14px 0;">
+          <div class="field">
+            <label for="annata">Annata</label>
+            <select id="annata"><option value="">Tutte</option></select>
+          </div>
 
-        <h2 class="admin-title">Aggiungi vino</h2>
-        <p class="admin-sub">Inserisci un nuovo vino (poi puoi sempre modificarlo).</p>
+          <div class="field">
+            <label for="prezzoMax">Prezzo max (€)</label>
+            <input id="prezzoMax" type="number" min="0" step="1" placeholder="Es. 35" />
+          </div>
 
-        <div class="field">
-          <label for="new_titolo">Titolo</label>
-          <input id="new_titolo" type="text" placeholder="Es. Barolo DOCG">
-        </div>
-
-        <div class="field" style="margin-top:10px;">
-          <label for="new_cantina">Cantina</label>
-          <input id="new_cantina" type="text" placeholder="Es. Gaja">
-        </div>
-
-        <div class="field" style="margin-top:10px;">
-          <label for="new_tipologia">Tipologia</label>
-          <input id="new_tipologia" type="text" placeholder="Es. Rosso / Bianco / Bollicine">
-        </div>
-
-        <div class="field" style="margin-top:10px;">
-          <label for="new_annata">Annata</label>
-          <input id="new_annata" type="text" placeholder="Es. 2018">
-        </div>
-
-        <div class="field" style="margin-top:10px;">
-          <label for="new_prezzo">Prezzo (€)</label>
-          <input id="new_prezzo" type="number" min="0" step="0.5" placeholder="Es. 35">
-        </div>
-
-        <div class="field" style="margin-top:10px;">
-          <label for="new_immagine_url">Immagine URL</label>
-          <input id="new_immagine_url" type="url" placeholder="https://...">
-        </div>
-
-        <div class="field" style="margin-top:10px;">
-          <label for="new_descrizione">Descrizione</label>
-          <input id="new_descrizione" type="text" placeholder="Breve descrizione (facoltativa)">
-        </div>
-
-        <div class="admin-actions">
-          <button class="btn btn--soft" id="createBtn" type="button">Crea</button>
+          <div class="actions">
+            <button class="btn btn--ghost" id="resetBtn" type="button">Reset filtri</button>
+            <button class="btn btn--soft" id="newBtn" type="button">+ Nuovo vino</button>
+          </div>
         </div>
       </section>
 
-      <!-- LISTA + EDIT -->
-      <section class="panel admin-card" aria-label="Lista vini">
-        <h2 class="admin-title">Vini</h2>
-        <p class="admin-sub">Modifica o elimina. Ordinati per titolo.</p>
+      <section class="grid" id="grid" aria-label="Lista vini"></section>
+    </section>
 
-        <div class="field field--full">
-          <label for="q">Cerca (titolo/cantina)</label>
-          <input id="q" type="search" placeholder="Es. Amarone, Gaja...">
+    <!-- MODAL EDIT -->
+    <div class="modal" id="modal" aria-hidden="true">
+      <div class="modal__overlay" id="modalOverlay"></div>
+      <div class="modal__card" role="dialog" aria-modal="true" aria-label="Editor vino">
+        <div class="modal__head">
+          <div class="modal__title" id="modalTitle">Modifica vino</div>
+          <button class="btn btn--ghost modal__close" id="closeModalBtn" type="button">✕</button>
         </div>
 
-        <div style="margin-top:12px; overflow:auto;">
-          <table class="table">
-            <thead>
-              <tr>
-                <th style="width:54px;">ID</th>
-                <th>Titolo</th>
-                <th>Cantina</th>
-                <th style="width:140px;">Tipologia</th>
-                <th style="width:90px;">Annata</th>
-                <th style="width:90px;">Prezzo</th>
-                <th style="width:190px;">Azioni</th>
-              </tr>
-            </thead>
-            <tbody id="rows"></tbody>
-          </table>
+        <div class="modal__body">
+          <div class="formgrid">
+            <div class="field">
+              <label for="f_titolo">Titolo</label>
+              <input id="f_titolo" type="text" placeholder="Es. Primitivo di Manduria">
+            </div>
+
+            <div class="field">
+              <label for="f_cantina">Cantina</label>
+              <input id="f_cantina" type="text" placeholder="Es. Cantina XYZ">
+            </div>
+
+            <div class="field">
+              <label for="f_tipologia">Tipologia</label>
+              <input id="f_tipologia" type="text" placeholder="Rosso / Bianco / Bollicine...">
+            </div>
+
+            <div class="field">
+              <label for="f_luogo">Territorio</label>
+              <input id="f_luogo" type="text" placeholder="Puglia / Toscana...">
+            </div>
+
+            <div class="field">
+              <label for="f_annata">Annata</label>
+              <input id="f_annata" type="text" placeholder="2021">
+            </div>
+
+            <div class="field">
+              <label for="f_uvaggio">Uvaggio</label>
+              <input id="f_uvaggio" type="text" placeholder="Primitivo 100%">
+            </div>
+
+            <div class="field">
+              <label for="f_prezzo">Prezzo</label>
+              <input id="f_prezzo" type="number" min="0" step="0.5" placeholder="Es. 28">
+            </div>
+
+            <div class="field field--full">
+              <label for="f_immagine_url">Immagine URL (Supabase Storage o URL pubblico)</label>
+              <input id="f_immagine_url" type="url" placeholder="https://...">
+              <div class="imgprev" id="imgPrevWrap" style="display:none;">
+                <img id="imgPrev" alt="Anteprima immagine">
+              </div>
+            </div>
+
+            <div class="field field--full">
+              <label for="f_descrizione">Descrizione</label>
+              <textarea id="f_descrizione" rows="5" placeholder="Note, abbinamenti, descrizione..."></textarea>
+            </div>
+          </div>
         </div>
 
-        <div id="empty" class="empty" style="display:none; margin-top:12px;">
-          <div class="empty__title">Nessun vino</div>
-          <div class="empty__text">Controlla login e policy RLS.</div>
+        <div class="modal__foot">
+          <div class="modal__left">
+            <button class="btn btn--ghost" id="deleteBtn" type="button" style="display:none;">Elimina</button>
+          </div>
+          <div class="modal__right">
+            <button class="btn btn--ghost" id="cancelBtn" type="button">Annulla</button>
+            <button class="btn btn--soft" id="saveBtn" type="button">Salva</button>
+          </div>
         </div>
-      </section>
+      </div>
     </div>
+
   </main>
-
-  <!-- MODAL EDIT -->
-  <div class="modal" id="modal">
-    <div class="modal__panel" role="dialog" aria-modal="true" aria-label="Modifica vino">
-      <div class="modal__head">
-        <h3>Modifica vino</h3>
-        <button class="btn btn--ghost" id="closeModalBtn" type="button">Chiudi</button>
-      </div>
-
-      <div class="modal__body">
-        <div class="modal__grid">
-          <div class="field">
-            <label for="edit_id">ID</label>
-            <input id="edit_id" type="text" disabled>
-          </div>
-
-          <div class="field">
-            <label for="edit_prezzo">Prezzo (€)</label>
-            <input id="edit_prezzo" type="number" min="0" step="0.5">
-          </div>
-
-          <div class="field field--span2">
-            <label for="edit_titolo">Titolo</label>
-            <input id="edit_titolo" type="text">
-          </div>
-
-          <div class="field field--span2">
-            <label for="edit_cantina">Cantina</label>
-            <input id="edit_cantina" type="text">
-          </div>
-
-          <div class="field">
-            <label for="edit_tipologia">Tipologia</label>
-            <input id="edit_tipologia" type="text">
-          </div>
-
-          <div class="field">
-            <label for="edit_annata">Annata</label>
-            <input id="edit_annata" type="text">
-          </div>
-
-          <div class="field field--span2">
-            <label for="edit_immagine_url">Immagine URL</label>
-            <input id="edit_immagine_url" type="url">
-          </div>
-
-          <div class="field field--span2">
-            <label for="edit_descrizione">Descrizione</label>
-            <input id="edit_descrizione" type="text">
-          </div>
-        </div>
-      </div>
-
-      <div class="modal__foot">
-        <button class="btn btn--ghost" id="cancelBtn" type="button">Annulla</button>
-        <button class="btn btn--soft" id="saveBtn" type="button">Salva modifiche</button>
-      </div>
-    </div>
-  </div>
 
   <script src="./admin.js"></script>
 </body>
