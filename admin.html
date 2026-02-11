@@ -3,84 +3,82 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
-  <title>Admin — Le Cantine del Duca</title>
+  <title>Le Cantine del Duca — Admin</title>
 
   <meta name="theme-color" content="#4a0f1d">
   <link rel="apple-touch-icon" href="logo.png">
-  <link rel="stylesheet" href="./styles.css" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 
-  <!-- Supabase JS v2 -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="./styles.css" />
 </head>
 
 <body>
   <header class="topbar">
     <div class="topbar__inner">
       <div class="brand">
-        <img src="logo.png" alt="Logo" class="brand__logo">
+        <img src="logo.png" alt="Logo Le Cantine del Duca" class="brand__logo">
         <div class="brand__txt">
           <div class="brand__name">Le Cantine del Duca</div>
-          <div class="brand__sub">Admin — gestione vini</div>
+          <div class="brand__sub">Pannello Admin</div>
         </div>
       </div>
 
       <div class="topbar__right">
-        <div class="status" id="hint">—</div>
+        <div class="status" id="hint">Pronto.</div>
         <div class="pill">
           <span>Vini</span>
           <strong id="countPill">0</strong>
         </div>
-        <button class="btn btn--soft" id="logoutBtn" type="button" style="display:none;">Esci</button>
       </div>
     </div>
   </header>
 
   <main class="wrap">
     <!-- LOGIN -->
-    <section class="panel admin-auth" id="authBox">
+    <section class="panel admin-login" id="loginPanel">
       <div class="panel__head">
         <h2>Accesso</h2>
-        <p>Accedi con email e password (Supabase Auth).</p>
+        <p>Login con email e password (Supabase Auth).</p>
       </div>
 
-      <div class="auth__grid">
-        <div class="field field--wide">
+      <div class="admin-form">
+        <div class="field">
           <label for="email">Email</label>
-          <input id="email" type="email" placeholder="nome@dominio.it" autocomplete="email">
+          <input id="email" type="email" autocomplete="username" placeholder="nome@dominio.it">
         </div>
 
-        <div class="field field--wide">
+        <div class="field">
           <label for="password">Password</label>
-          <input id="password" type="password" placeholder="••••••••" autocomplete="current-password">
+          <input id="password" type="password" autocomplete="current-password" placeholder="••••••••">
         </div>
 
-        <div class="actions auth__actions">
-          <button class="btn btn--ghost" id="loginBtn" type="button">Accedi</button>
-          <button class="btn btn--soft" id="signupBtn" type="button" title="Solo se vuoi creare utenti da qui">Crea utente</button>
+        <div class="actions">
+          <button class="btn btn--soft" id="loginBtn" type="button">Entra</button>
         </div>
-
-        <p class="auth__note">
-          Suggerimento: crea gli utenti da Supabase → Authentication → Users, poi qui fai login.
-        </p>
       </div>
     </section>
 
     <!-- APP -->
-    <section id="app" style="display:none;">
-      <section class="panel filters" aria-label="Filtri admin">
-        <div class="panel__head">
-          <h2>Archivio vini</h2>
-          <p>Cerca, modifica e aggiungi etichette.</p>
-        </div>
+    <section id="appPanel" style="display:none;">
+      <section class="panel admin-toolbar">
+        <div class="admin-toolbar__inner">
+          <div class="admin-user" id="userBox">—</div>
 
-        <div class="filters__grid">
+          <div class="admin-toolbar__actions">
+            <button class="btn btn--soft" id="newBtn" type="button">+ Nuovo vino</button>
+            <button class="btn btn--ghost" id="logoutBtn" type="button">Esci</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel filters" aria-label="Filtri admin">
+        <div class="filters__grid admin-filters">
           <div class="field field--full">
-            <label for="q">Cerca</label>
-            <input id="q" type="search" placeholder="Titolo, cantina, territorio..." />
+            <label for="q">Cerca (titolo / cantina)</label>
+            <input id="q" type="search" placeholder="Es. Amarone, Gaja...">
           </div>
 
           <div class="field">
@@ -93,106 +91,92 @@
             <select id="luogo"><option value="">Tutti</option></select>
           </div>
 
-          <div class="field">
-            <label for="uvaggio">Uvaggio</label>
-            <select id="uvaggio"><option value="">Tutti</option></select>
-          </div>
-
-          <div class="field">
-            <label for="annata">Annata</label>
-            <select id="annata"><option value="">Tutte</option></select>
-          </div>
-
-          <div class="field">
-            <label for="prezzoMax">Prezzo max (€)</label>
-            <input id="prezzoMax" type="number" min="0" step="1" placeholder="Es. 35" />
-          </div>
-
           <div class="actions">
-            <button class="btn btn--ghost" id="resetBtn" type="button">Reset filtri</button>
-            <button class="btn btn--soft" id="newBtn" type="button">+ Nuovo vino</button>
+            <button class="btn btn--ghost" id="resetBtn" type="button">Reset</button>
           </div>
         </div>
       </section>
 
-      <section class="grid" id="grid" aria-label="Lista vini"></section>
+      <section class="grid admin-grid" id="grid" aria-label="Lista vini admin"></section>
     </section>
+  </main>
 
-    <!-- MODAL EDIT -->
-    <div class="modal" id="modal" aria-hidden="true">
-      <div class="modal__overlay" id="modalOverlay"></div>
-      <div class="modal__card" role="dialog" aria-modal="true" aria-label="Editor vino">
-        <div class="modal__head">
-          <div class="modal__title" id="modalTitle">Modifica vino</div>
-          <button class="btn btn--ghost modal__close" id="closeModalBtn" type="button">✕</button>
+  <!-- MODAL -->
+  <div class="modal" id="modal" aria-hidden="true">
+    <div class="modal__backdrop" data-close="1"></div>
+
+    <div class="modal__card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal__head">
+        <div>
+          <div class="modal__kicker">Scheda vino</div>
+          <h3 class="modal__title" id="modalTitle">Nuovo vino</h3>
         </div>
+        <button class="btn btn--ghost" id="closeBtn" type="button">✕</button>
+      </div>
 
-        <div class="modal__body">
-          <div class="formgrid">
-            <div class="field">
-              <label for="f_titolo">Titolo</label>
-              <input id="f_titolo" type="text" placeholder="Es. Primitivo di Manduria">
-            </div>
+      <div class="modal__body">
+        <div class="admin-form admin-form--grid">
+          <input type="hidden" id="id">
 
-            <div class="field">
-              <label for="f_cantina">Cantina</label>
-              <input id="f_cantina" type="text" placeholder="Es. Cantina XYZ">
-            </div>
-
-            <div class="field">
-              <label for="f_tipologia">Tipologia</label>
-              <input id="f_tipologia" type="text" placeholder="Rosso / Bianco / Bollicine...">
-            </div>
-
-            <div class="field">
-              <label for="f_luogo">Territorio</label>
-              <input id="f_luogo" type="text" placeholder="Puglia / Toscana...">
-            </div>
-
-            <div class="field">
-              <label for="f_annata">Annata</label>
-              <input id="f_annata" type="text" placeholder="2021">
-            </div>
-
-            <div class="field">
-              <label for="f_uvaggio">Uvaggio</label>
-              <input id="f_uvaggio" type="text" placeholder="Primitivo 100%">
-            </div>
-
-            <div class="field">
-              <label for="f_prezzo">Prezzo</label>
-              <input id="f_prezzo" type="number" min="0" step="0.5" placeholder="Es. 28">
-            </div>
-
-            <div class="field field--full">
-              <label for="f_immagine_url">Immagine URL (Supabase Storage o URL pubblico)</label>
-              <input id="f_immagine_url" type="url" placeholder="https://...">
-              <div class="imgprev" id="imgPrevWrap" style="display:none;">
-                <img id="imgPrev" alt="Anteprima immagine">
-              </div>
-            </div>
-
-            <div class="field field--full">
-              <label for="f_descrizione">Descrizione</label>
-              <textarea id="f_descrizione" rows="5" placeholder="Note, abbinamenti, descrizione..."></textarea>
-            </div>
+          <div class="field field--full">
+            <label for="titolo">Titolo*</label>
+            <input id="titolo" type="text" placeholder="Es. Barolo DOCG...">
           </div>
-        </div>
 
-        <div class="modal__foot">
-          <div class="modal__left">
-            <button class="btn btn--ghost" id="deleteBtn" type="button" style="display:none;">Elimina</button>
+          <div class="field">
+            <label for="cantina">Cantina</label>
+            <input id="cantina" type="text" placeholder="Es. Gaja">
           </div>
-          <div class="modal__right">
-            <button class="btn btn--ghost" id="cancelBtn" type="button">Annulla</button>
-            <button class="btn btn--soft" id="saveBtn" type="button">Salva</button>
+
+          <div class="field">
+            <label for="tipologiaM">Tipologia</label>
+            <input id="tipologiaM" type="text" placeholder="Rosso / Bianco / Bollicine...">
+          </div>
+
+          <div class="field">
+            <label for="luogoM">Territorio</label>
+            <input id="luogoM" type="text" placeholder="Piemonte / Toscana...">
+          </div>
+
+          <div class="field">
+            <label for="annata">Annata</label>
+            <input id="annata" type="number" min="1900" step="1" placeholder="2020">
+          </div>
+
+          <div class="field">
+            <label for="prezzo">Prezzo (€)</label>
+            <input id="prezzo" type="number" min="0" step="0.5" placeholder="35">
+          </div>
+
+          <div class="field field--full">
+            <label for="uvaggio">Uvaggio</label>
+            <input id="uvaggio" type="text" placeholder="Nebbiolo 100%...">
+          </div>
+
+          <div class="field field--full">
+            <label for="immagine_url">Immagine (URL Supabase Storage)</label>
+            <input id="immagine_url" type="url" placeholder="https://.../storage/v1/object/public/...">
+          </div>
+
+          <div class="field field--full">
+            <label for="descrizione">Descrizione</label>
+            <textarea id="descrizione" rows="5" placeholder="Note, abbinamenti, stile..."></textarea>
           </div>
         </div>
       </div>
+
+      <div class="modal__foot">
+        <div class="modal__foot-left">
+          <button class="btn btn--ghost danger" id="deleteBtn" type="button" style="display:none;">Elimina</button>
+        </div>
+        <div class="modal__foot-right">
+          <button class="btn btn--ghost" id="cancelBtn" type="button">Annulla</button>
+          <button class="btn btn--soft" id="saveBtn" type="button">Salva</button>
+        </div>
+      </div>
     </div>
+  </div>
 
-  </main>
-
-  <script src="./admin.js"></script>
+  <script type="module" src="./admin.js"></script>
 </body>
 </html>
