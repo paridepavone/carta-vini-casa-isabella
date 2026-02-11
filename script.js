@@ -237,7 +237,9 @@ function hydrateFilters() {
   fillSelect(el.tipologia, uniqSorted(VINI.map((w) => w.tipologia)), "Tutte");
   fillSelect(el.luogo, uniqSorted(VINI.map((w) => w.luogo)), "Tutti");
   fillSelect(el.uvaggio, uniqSorted(VINI.map((w) => w.uvaggio)), "Tutti");
-  const annate = uniqSorted(VINI.map((w) => (w.annata ? String(w.annata) : null))).sort((a, b) => Number(b) - Number(a));
+
+  const annate = uniqSorted(VINI.map((w) => (w.annata ? String(w.annata) : null)))
+    .sort((a, b) => Number(b) - Number(a));
   fillSelect(el.annata, annate, "Tutte");
 }
 
@@ -264,7 +266,15 @@ function applyFilters() {
     if (f.prezzoMax !== null && w.prezzo !== null && w.prezzo > f.prezzoMax) return false;
 
     if (f.q) {
-      const hay = (w.titolo + " " + w.cantina + " " + w.tipologia + " " + w.luogo + " " + (w.annata ?? "") + " " + w.uvaggio + " " + w.descrizione).toLowerCase();
+      const hay = (
+        w.titolo + " " +
+        w.cantina + " " +
+        w.tipologia + " " +
+        w.luogo + " " +
+        (w.annata ?? "") + " " +
+        w.uvaggio + " " +
+        w.descrizione
+      ).toLowerCase();
       if (!hay.includes(f.q)) return false;
     }
     return true;
@@ -282,194 +292,6 @@ function applyFilters() {
   renderGrid(items);
 }
 
-/* -------------------------
-   LIST RENDER
-------------------------- */
-function renderGrid(items) {
-  if (!el.grid) return;
-
-  if (!items.length) {
-    el.grid.innerHTML = `
-      <div class="empty">
-        <div class="empty__title">Nessun risultato</div>
-        <div class="empty__text">Prova a cambiare filtri.</div>
-      </div>
-    `;
-    return;
-  }
-
-  el.grid.innerHTML = items.map((w) => {
-    const price = w.prezzo !== null ? `€ ${fmtPrice(w.prezzo)}` : "";
-    const meta = [w.cantina, w.tipologia, w.luogo, w.annata ? String(w.annata) : ""].filter(Boolean).join(" • ");
-    const img = w.immagine_url
-      ? `<img class="card__img" src="${w.immagine_url}" alt="${w.titolo}" loading="lazy">`
-      : `<div class="card__img card__img--ph" aria-hidden="true"><div class="ph__mark">🍷</div></div>`;
-
-    return `
-      <article class="card" role="button" tabindex="0" data-wine-id="${String(w.id)}">
-        ${img}
-        <div class="card__body">
-          <div class="card__top">
-            <h3 class="card__title">${w.titolo}</h3>
-            ${price ? `<div class="card__price">${price}</div>` : ""}
-          </div>
-          <div class="card__meta">${meta}</div>
-          ${w.uvaggio ? `<div class="card__uvaggio">${w.uvaggio}</div>` : ""}
-        </div>
-      </article>
-    `;
-  }).join("");
-
-  el.grid.querySelectorAll("[data-wine-id]").forEach((card) => {
-    const open = () => {
-      const id = card.getAttribute("data-wine-id");
-      location.hash = `#wine=${encodeURIComponent(id)}`;
-    };
-    card.addEventListener("click", open);
-    card.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); }
-    });
-  });
-}
-
-/* -------------------------
-   DETAIL (EDIT)
-------------------------- */
-function showList() {
-  el.detailView.style.display = "none";
-  el.listView.style.display = "block";
-  window.scrollTo({ top: 0, behavior: "smooth" });
-}
-
-function showDetail(id) {
-  const w = BY_ID.get(String(id));
-  if (!w) return showList();
-
-  el.listView.style.display = "none";
-  el.detailView.style.display = "block";
-
-  el.detailCard.innerHTML = detailHtml(w);
-
-  $("#saveBtn").addEventListener("click", () => onSave(id));
-  $("#deleteBtn").addEventListener("click", () => deleteWine(id));
-
-  window.scrollTo({ top: 0, behavior: "smooth" });
-}
-
-function openNewWine() {
-  el.listView.style.display = "none";
-  el.detailView.style.display = "block";
-  el.detailCard.innerHTML = detailHtml(null);
-
-  $("#saveBtn").addEventListener("click", onCreate);
-  const del = $("#deleteBtn");
-  if (del) del.remove();
-}
-
-function detailHtml(w) {
-  const isNew = !w;
-  const img = w?.immagine_url || "";
-  const titolo = w?.titolo || "";
-  const cantina = w?.cantina || "";
-  const tipologia = w?.tipologia || "";
-  const luogo = w?.luogo || "";
-  const uvaggio = w?.uvaggio || "";
-  const annata = w?.annata ?? "";
-  const prezzo = w?.prezzo ?? "";
-  const descrizione = w?.descrizione || "";
-  const evidenza = w?.in_evidenza ? "checked" : "";
-
-  return `
-    <div class="detail-card__inner">
-      <div class="detail-media">
-        ${img ? `<img class="detail-media__img" src="${img}" alt="${titolo}" loading="lazy">`
-             : `<div class="detail-media__img detail-media__img--ph"><div class="ph__mark">🍷</div></div>`}
-        <div style="margin-top:10px;">
-          <label style="display:block; font-size:12px; color:#6b6f76; margin-bottom:6px;">URL immagine</label>
-          <input id="f_immagine_url" type="text" value="${img}">
-        </div>
-      </div>
-
-      <div class="detail-info">
-        <div class="detail-head">
-          <h2 class="detail-title">${isNew ? "Nuovo vino" : titolo}</h2>
-          <div class="detail-price">${isNew ? "—" : (prezzo !== "" ? "€ " + fmtPrice(prezzo) : "—")}</div>
-        </div>
-
-        <div style="margin-top:14px; display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
-          <div class="field" style="gap:6px;"><label>Titolo</label><input id="f_titolo" type="text" value="${titolo}"></div>
-          <div class="field" style="gap:6px;"><label>Cantina</label><input id="f_cantina" type="text" value="${cantina}"></div>
-
-          <div class="field" style="gap:6px;"><label>Tipologia</label><input id="f_tipologia" type="text" value="${tipologia}"></div>
-          <div class="field" style="gap:6px;"><label>Territorio</label><input id="f_luogo" type="text" value="${luogo}"></div>
-
-          <div class="field" style="gap:6px;"><label>Uvaggio</label><input id="f_uvaggio" type="text" value="${uvaggio}"></div>
-          <div class="field" style="gap:6px;"><label>Annata</label><input id="f_annata" type="number" value="${annata}"></div>
-
-          <div class="field" style="gap:6px;"><label>Prezzo (€)</label><input id="f_prezzo" type="number" step="0.5" value="${prezzo}"></div>
-
-          <div class="field" style="gap:6px; align-items:flex-start;">
-            <label style="display:flex; gap:10px; align-items:center; margin-top:22px;">
-              <input id="f_in_evidenza" type="checkbox" ${evidenza} style="width:auto;">
-              In evidenza
-            </label>
-          </div>
-
-          <div class="field" style="grid-column: 1 / -1; gap:6px;">
-            <label>Descrizione</label>
-            <input id="f_descrizione" type="text" value="${descrizione}">
-          </div>
-        </div>
-
-        <div class="detail-actions" style="margin-top:14px;">
-          <button class="btn btn--soft" id="saveBtn" type="button">${isNew ? "Crea vino" : "Salva modifiche"}</button>
-          ${isNew ? "" : `<button class="btn btn--ghost" id="deleteBtn" type="button">Elimina</button>`}
-        </div>
-
-        <div class="detail-small">${SESSION ? "Sei autenticato." : "Per salvare devi fare login."}</div>
-      </div>
-    </div>
-  `;
-}
-
-function readForm() {
-  return {
-    titolo: normalizeText($("#f_titolo").value),
-    cantina: normalizeText($("#f_cantina").value),
-    tipologia: normalizeText($("#f_tipologia").value),
-    luogo: normalizeText($("#f_luogo").value),
-    uvaggio: normalizeText($("#f_uvaggio").value),
-    annata: toNumber($("#f_annata").value),
-    prezzo: toNumber($("#f_prezzo").value),
-    descrizione: normalizeText($("#f_descrizione").value),
-    immagine_url: normalizeText($("#f_immagine_url").value),
-    in_evidenza: !!$("#f_in_evidenza").checked,
-  };
-}
-
-async function onSave(id) {
-  const patch = readForm();
-  if (!patch.titolo) return alert("Titolo obbligatorio.");
-  await updateWine(id, patch);
-}
-
-async function onCreate() {
-  const payload = readForm();
-  if (!payload.titolo) return alert("Titolo obbligatorio.");
-  await insertWine(payload);
-}
-
-function handleRoute() {
-  const hash = location.hash || "";
-  const m = hash.match(/#wine=([^&]+)/);
-  const id = m ? decodeURIComponent(m[1]) : null;
-  if (id && BY_ID.has(String(id))) showDetail(String(id));
-  else showList();
-}
-
-/* -------------------------
-   EVENTS + RELOAD
-------------------------- */
 function bindEvents() {
   const bind = (node, evt) => node && node.addEventListener(evt, applyFilters);
 
