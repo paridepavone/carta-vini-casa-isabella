@@ -1,24 +1,13 @@
-/* =========================
-   CONFIG (SUPABASE) — LASCIO LA TUA CONNESSIONE
-========================= */
+// admin.js (SAFE VERSION) — Supabase Admin CRUD
+
 const SUPABASE_URL = "https://bxdermzgfunwpvgektnz.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ4ZGVybXpnZnVud3B2Z2VrdG56Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3MDk1NzksImV4cCI6MjA4NjI4NTU3OX0.yIr_RtG2WDDl09l5MY2MWFd2PnnoE0L3c0uVxBBzQCE";
-/* =========================
-
-// Tabella
 const TABLE = "vini";
 
-/* =========================
-   STATE
-========================= */
-let VINI = [];
-let FILTERED = [];
-let BY_ID = new Map();
 let SESSION = null;
+let VINI = [];
+let BY_ID = new Map();
 
-/* =========================
-   DOM
-========================= */
 const $ = (s) => document.querySelector(s);
 
 const el = {
@@ -50,17 +39,7 @@ function setCount(n) {
   if (el.countPill) el.countPill.textContent = String(n ?? 0);
 }
 
-function escapeHtml(str) {
-  return String(str ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-function normalizeText(v) {
-  return String(v ?? "").trim();
-}
+function normalizeText(v) { return String(v ?? "").trim(); }
 function toNumber(v) {
   if (v === null || v === undefined || v === "") return null;
   const n = Number(String(v).replace(",", "."));
@@ -78,19 +57,17 @@ function fmtPrice(n) {
   return new Intl.NumberFormat("it-IT", { maximumFractionDigits: 2 }).format(num);
 }
 
-/* =========================
-   SUPABASE CLIENT
-========================= */
-const supabase = window.supabase?.createClient
-  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-  : null;
+if (!window.supabase?.createClient) {
+  alert("Manca supabase-js. In admin.html aggiungi: <script src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'></script>");
+}
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-/* =========================
-   LOGIN UI (inject)
-========================= */
+/* -------------------------
+   AUTH UI
+------------------------- */
 function injectAuthUI() {
-  const container = el.featuredContainer || el.listView;
-  if (!container) return;
+  const host = el.featuredContainer || el.listView;
+  if (!host) return;
 
   const box = document.createElement("section");
   box.className = "panel";
@@ -100,11 +77,11 @@ function injectAuthUI() {
   box.innerHTML = `
     <div class="filters__grid" style="grid-template-columns: 1.2fr 1.2fr auto auto; align-items:end;">
       <div class="field">
-        <label for="adminEmail">Email admin</label>
+        <label>Email admin</label>
         <input id="adminEmail" type="email" placeholder="nome@azienda.it" autocomplete="username">
       </div>
       <div class="field">
-        <label for="adminPass">Password</label>
+        <label>Password</label>
         <input id="adminPass" type="password" placeholder="••••••••" autocomplete="current-password">
       </div>
       <div class="actions" style="grid-column:auto; padding-top:0;">
@@ -120,20 +97,17 @@ function injectAuthUI() {
     </div>
   `;
 
-  // metti in alto
-  container.prepend(box);
+  host.prepend(box);
 
-  // bind
-  $("#loginBtn")?.addEventListener("click", login);
-  $("#logoutBtn")?.addEventListener("click", logout);
-  $("#newWineBtn")?.addEventListener("click", () => openNewWine());
+  $("#loginBtn").addEventListener("click", login);
+  $("#logoutBtn").addEventListener("click", logout);
+  $("#newWineBtn").addEventListener("click", openNewWine);
 }
 
 function renderAuthState() {
   const st = $("#authState");
   const loginBtn = $("#loginBtn");
   const logoutBtn = $("#logoutBtn");
-
   if (!st || !loginBtn || !logoutBtn) return;
 
   const isLogged = !!SESSION;
@@ -142,36 +116,26 @@ function renderAuthState() {
   logoutBtn.style.display = isLogged ? "inline-flex" : "none";
 }
 
-/* =========================
+/* -------------------------
    AUTH
-========================= */
+------------------------- */
 async function refreshSession() {
-  if (!supabase) {
-    setHint("Manca supabase-js nel HTML.");
-    return;
-  }
   const { data } = await supabase.auth.getSession();
   SESSION = data.session || null;
   renderAuthState();
 }
 
 async function login() {
-  const email = ($("#adminEmail")?.value || "").trim();
-  const password = $("#adminPass")?.value || "";
-
-  if (!email || !password) {
-    alert("Inserisci email e password.");
-    return;
-  }
+  const email = ($("#adminEmail").value || "").trim();
+  const password = $("#adminPass").value || "";
+  if (!email || !password) return alert("Inserisci email e password.");
 
   setHint("Login…");
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) {
     setHint("");
-    alert("Login fallito: " + error.message);
-    return;
+    return alert("Login fallito: " + error.message);
   }
-
   SESSION = data.session;
   renderAuthState();
   setHint("Login OK ✓");
@@ -187,30 +151,9 @@ async function logout() {
   setTimeout(() => setHint(""), 800);
 }
 
-/* =========================
+/* -------------------------
    DB
-========================= */
-async function fetchWines() {
-  setHint("Caricamento vini…");
-
-  const { data, error } = await supabase
-    .from(TABLE)
-    .select("*")
-    .order("titolo", { ascending: true });
-
-  if (error) {
-    console.error(error);
-    setHint("Errore: " + error.message);
-    VINI = [];
-    BY_ID = new Map();
-    return;
-  }
-
-  VINI = (data || []).map(normalizeWine);
-  BY_ID = new Map(VINI.map((w) => [String(w.id), w]));
-  setHint("");
-}
-
+------------------------- */
 function normalizeWine(w) {
   return {
     id: w.id,
@@ -227,19 +170,29 @@ function normalizeWine(w) {
   };
 }
 
+async function fetchWines() {
+  setHint("Caricamento vini…");
+  const { data, error } = await supabase.from(TABLE).select("*").order("titolo", { ascending: true });
+  if (error) {
+    console.error(error);
+    setHint("Errore: " + error.message);
+    VINI = [];
+    BY_ID = new Map();
+    return;
+  }
+  VINI = (data || []).map(normalizeWine);
+  BY_ID = new Map(VINI.map((w) => [String(w.id), w]));
+  setHint("");
+}
+
 async function insertWine(payload) {
   if (!SESSION) return alert("Devi fare login per aggiungere.");
   setHint("Salvataggio…");
-
   const { error } = await supabase.from(TABLE).insert([payload]);
-
   if (error) {
-    console.error(error);
     setHint("");
-    alert("Errore INSERT: " + error.message);
-    return;
+    return alert("Errore INSERT: " + error.message);
   }
-
   setHint("Salvato ✓");
   await reloadAndGoList();
 }
@@ -247,65 +200,45 @@ async function insertWine(payload) {
 async function updateWine(id, patch) {
   if (!SESSION) return alert("Devi fare login per modificare.");
   setHint("Aggiornamento…");
-
   const { error } = await supabase.from(TABLE).update(patch).eq("id", id);
-
   if (error) {
-    console.error(error);
     setHint("");
-    alert("Errore UPDATE: " + error.message);
-    return;
+    return alert("Errore UPDATE: " + error.message);
   }
-
   setHint("Aggiornato ✓");
   await reloadAndStayDetail(id);
 }
 
 async function deleteWine(id) {
   if (!SESSION) return alert("Devi fare login per eliminare.");
-  const ok = confirm("Eliminare questo vino? Azione irreversibile.");
-  if (!ok) return;
+  if (!confirm("Eliminare questo vino? Azione irreversibile.")) return;
 
   setHint("Eliminazione…");
   const { error } = await supabase.from(TABLE).delete().eq("id", id);
-
   if (error) {
-    console.error(error);
     setHint("");
-    alert("Errore DELETE: " + error.message);
-    return;
+    return alert("Errore DELETE: " + error.message);
   }
-
   setHint("Eliminato ✓");
   await reloadAndGoList();
 }
 
-/* =========================
+/* -------------------------
    FILTERS
-========================= */
-function hydrateFilterOptions() {
-  const tipologie = uniqSorted(VINI.map((w) => w.tipologia));
-  const luoghi = uniqSorted(VINI.map((w) => w.luogo));
-  const uvaggi = uniqSorted(VINI.map((w) => w.uvaggio));
-
-  const annate = uniqSorted(VINI.map((w) => (w.annata ? String(w.annata) : null)))
-    .sort((a, b) => Number(b) - Number(a));
-
-  fillSelect(el.tipologia, tipologie, "Tutte");
-  fillSelect(el.luogo, luoghi, "Tutti");
-  fillSelect(el.uvaggio, uvaggi, "Tutti");
-  fillSelect(el.annata, annate, "Tutte");
-}
-
+------------------------- */
 function fillSelect(selectEl, options, allLabel) {
   if (!selectEl) return;
   const current = selectEl.value;
-
-  selectEl.innerHTML =
-    `<option value="">${escapeHtml(allLabel)}</option>` +
-    options.map((o) => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join("");
-
+  selectEl.innerHTML = `<option value="">${allLabel}</option>` + options.map((o) => `<option value="${o}">${o}</option>`).join("");
   if (current && options.includes(current)) selectEl.value = current;
+}
+
+function hydrateFilters() {
+  fillSelect(el.tipologia, uniqSorted(VINI.map((w) => w.tipologia)), "Tutte");
+  fillSelect(el.luogo, uniqSorted(VINI.map((w) => w.luogo)), "Tutti");
+  fillSelect(el.uvaggio, uniqSorted(VINI.map((w) => w.uvaggio)), "Tutti");
+  const annate = uniqSorted(VINI.map((w) => (w.annata ? String(w.annata) : null))).sort((a, b) => Number(b) - Number(a));
+  fillSelect(el.annata, annate, "Tutte");
 }
 
 function getFilters() {
@@ -321,32 +254,23 @@ function getFilters() {
 
 function applyFilters() {
   const f = getFilters();
+  let items = VINI.slice();
 
-  FILTERED = VINI.filter((w) => {
+  items = items.filter((w) => {
     if (f.tipologia && w.tipologia !== f.tipologia) return false;
     if (f.luogo && w.luogo !== f.luogo) return false;
     if (f.uvaggio && w.uvaggio !== f.uvaggio) return false;
     if (f.annata && String(w.annata ?? "") !== f.annata) return false;
-
     if (f.prezzoMax !== null && w.prezzo !== null && w.prezzo > f.prezzoMax) return false;
 
     if (f.q) {
-      const hay = (
-        w.titolo + " " +
-        w.cantina + " " +
-        w.tipologia + " " +
-        w.luogo + " " +
-        (w.annata ?? "") + " " +
-        w.uvaggio + " " +
-        w.descrizione
-      ).toLowerCase();
+      const hay = (w.titolo + " " + w.cantina + " " + w.tipologia + " " + w.luogo + " " + (w.annata ?? "") + " " + w.uvaggio + " " + w.descrizione).toLowerCase();
       if (!hay.includes(f.q)) return false;
     }
-
     return true;
   });
 
-  FILTERED.sort((a, b) => {
+  items.sort((a, b) => {
     const t1 = sortAlpha(a.tipologia, b.tipologia);
     if (t1 !== 0) return t1;
     const t2 = sortAlpha(a.titolo, b.titolo);
@@ -354,13 +278,13 @@ function applyFilters() {
     return Number(b.annata || 0) - Number(a.annata || 0);
   });
 
-  setCount(FILTERED.length);
-  renderGrid(FILTERED);
+  setCount(items.length);
+  renderGrid(items);
 }
 
-/* =========================
-   RENDER LIST
-========================= */
+/* -------------------------
+   LIST RENDER
+------------------------- */
 function renderGrid(items) {
   if (!el.grid) return;
 
@@ -374,7 +298,27 @@ function renderGrid(items) {
     return;
   }
 
-  el.grid.innerHTML = items.map(wineCardHtml).join("");
+  el.grid.innerHTML = items.map((w) => {
+    const price = w.prezzo !== null ? `€ ${fmtPrice(w.prezzo)}` : "";
+    const meta = [w.cantina, w.tipologia, w.luogo, w.annata ? String(w.annata) : ""].filter(Boolean).join(" • ");
+    const img = w.immagine_url
+      ? `<img class="card__img" src="${w.immagine_url}" alt="${w.titolo}" loading="lazy">`
+      : `<div class="card__img card__img--ph" aria-hidden="true"><div class="ph__mark">🍷</div></div>`;
+
+    return `
+      <article class="card" role="button" tabindex="0" data-wine-id="${String(w.id)}">
+        ${img}
+        <div class="card__body">
+          <div class="card__top">
+            <h3 class="card__title">${w.titolo}</h3>
+            ${price ? `<div class="card__price">${price}</div>` : ""}
+          </div>
+          <div class="card__meta">${meta}</div>
+          ${w.uvaggio ? `<div class="card__uvaggio">${w.uvaggio}</div>` : ""}
+        </div>
+      </article>
+    `;
+  }).join("");
 
   el.grid.querySelectorAll("[data-wine-id]").forEach((card) => {
     const open = () => {
@@ -383,57 +327,17 @@ function renderGrid(items) {
     };
     card.addEventListener("click", open);
     card.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        open();
-      }
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); }
     });
   });
 }
 
-function wineCardHtml(w) {
-  const price = w.prezzo !== null ? `€ ${fmtPrice(w.prezzo)}` : "";
-  const meta = [w.cantina, w.tipologia, w.luogo, w.annata ? String(w.annata) : ""]
-    .filter(Boolean)
-    .join(" • ");
-
-  const hasImg = !!w.immagine_url;
-  const imgHtml = hasImg
-    ? `<img class="card__img" src="${escapeHtml(w.immagine_url)}" alt="${escapeHtml(w.titolo)}" loading="lazy">`
-    : `<div class="card__img card__img--ph" aria-hidden="true">
-         <div class="ph__mark">🍷</div>
-       </div>`;
-
-  return `
-    <article class="card" role="button" tabindex="0" data-wine-id="${escapeHtml(String(w.id))}">
-      ${imgHtml}
-      <div class="card__body">
-        <div class="card__top">
-          <h3 class="card__title">${escapeHtml(w.titolo)}</h3>
-          ${price ? `<div class="card__price">${escapeHtml(price)}</div>` : ""}
-        </div>
-        <div class="card__meta">${escapeHtml(meta)}</div>
-        ${w.uvaggio ? `<div class="card__uvaggio">${escapeHtml(w.uvaggio)}</div>` : ""}
-      </div>
-    </article>
-  `;
-}
-
-/* =========================
-   DETAIL (EDIT FORM)
-========================= */
-function handleRoute() {
-  const hash = location.hash || "";
-  const m = hash.match(/#wine=([^&]+)/);
-  const id = m ? decodeURIComponent(m[1]) : null;
-
-  if (id && BY_ID.has(String(id))) showDetail(String(id));
-  else showList();
-}
-
+/* -------------------------
+   DETAIL (EDIT)
+------------------------- */
 function showList() {
-  if (el.detailView) el.detailView.style.display = "none";
-  if (el.listView) el.listView.style.display = "block";
+  el.detailView.style.display = "none";
+  el.listView.style.display = "block";
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -441,94 +345,68 @@ function showDetail(id) {
   const w = BY_ID.get(String(id));
   if (!w) return showList();
 
-  if (el.listView) el.listView.style.display = "none";
-  if (el.detailView) el.detailView.style.display = "block";
-  if (el.detailCard) el.detailCard.innerHTML = wineDetailFormHtml(w);
+  el.listView.style.display = "none";
+  el.detailView.style.display = "block";
 
-  // bind buttons
-  $("#saveBtn")?.addEventListener("click", () => onSave(id));
-  $("#deleteBtn")?.addEventListener("click", () => deleteWine(id));
+  el.detailCard.innerHTML = detailHtml(w);
+
+  $("#saveBtn").addEventListener("click", () => onSave(id));
+  $("#deleteBtn").addEventListener("click", () => deleteWine(id));
 
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 function openNewWine() {
-  if (el.listView) el.listView.style.display = "none";
-  if (el.detailView) el.detailView.style.display = "block";
-  if (el.detailCard) el.detailCard.innerHTML = wineDetailFormHtml(null);
+  el.listView.style.display = "none";
+  el.detailView.style.display = "block";
+  el.detailCard.innerHTML = detailHtml(null);
 
-  $("#saveBtn")?.addEventListener("click", () => onCreate());
-  $("#deleteBtn")?.remove(); // non serve
-
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  $("#saveBtn").addEventListener("click", onCreate);
+  const del = $("#deleteBtn");
+  if (del) del.remove();
 }
 
-function wineDetailFormHtml(w) {
+function detailHtml(w) {
   const isNew = !w;
-
-  const img = w?.immagine_url ? escapeHtml(w.immagine_url) : "";
-  const titolo = escapeHtml(w?.titolo || "");
-  const cantina = escapeHtml(w?.cantina || "");
-  const tipologia = escapeHtml(w?.tipologia || "");
-  const luogo = escapeHtml(w?.luogo || "");
-  const uvaggio = escapeHtml(w?.uvaggio || "");
+  const img = w?.immagine_url || "";
+  const titolo = w?.titolo || "";
+  const cantina = w?.cantina || "";
+  const tipologia = w?.tipologia || "";
+  const luogo = w?.luogo || "";
+  const uvaggio = w?.uvaggio || "";
   const annata = w?.annata ?? "";
   const prezzo = w?.prezzo ?? "";
-  const descrizione = escapeHtml(w?.descrizione || "");
+  const descrizione = w?.descrizione || "";
   const evidenza = w?.in_evidenza ? "checked" : "";
 
   return `
     <div class="detail-card__inner">
       <div class="detail-media">
-        ${
-          img
-            ? `<img class="detail-media__img" src="${img}" alt="${titolo}" loading="lazy">`
-            : `<div class="detail-media__img detail-media__img--ph"><div class="ph__mark">🍷</div></div>`
-        }
+        ${img ? `<img class="detail-media__img" src="${img}" alt="${titolo}" loading="lazy">`
+             : `<div class="detail-media__img detail-media__img--ph"><div class="ph__mark">🍷</div></div>`}
         <div style="margin-top:10px;">
-          <label style="display:block; font-size:12px; color:#6b6f76; margin-bottom:6px;">URL immagine (immagine_url)</label>
-          <input id="f_immagine_url" type="text" value="${img}" placeholder="https://...">
+          <label style="display:block; font-size:12px; color:#6b6f76; margin-bottom:6px;">URL immagine</label>
+          <input id="f_immagine_url" type="text" value="${img}">
         </div>
       </div>
 
       <div class="detail-info">
         <div class="detail-head">
-          <h2 class="detail-title">${isNew ? "Nuovo vino" : escapeHtml(w.titolo)}</h2>
-          <div class="detail-price">${isNew ? "—" : (w.prezzo !== null ? "€ " + fmtPrice(w.prezzo) : "—")}</div>
+          <h2 class="detail-title">${isNew ? "Nuovo vino" : titolo}</h2>
+          <div class="detail-price">${isNew ? "—" : (prezzo !== "" ? "€ " + fmtPrice(prezzo) : "—")}</div>
         </div>
 
-        <div class="admin-form" style="margin-top:14px; display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
-          <div class="field" style="gap:6px;">
-            <label>Titolo</label>
-            <input id="f_titolo" type="text" value="${titolo}">
-          </div>
-          <div class="field" style="gap:6px;">
-            <label>Cantina</label>
-            <input id="f_cantina" type="text" value="${cantina}">
-          </div>
+        <div style="margin-top:14px; display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+          <div class="field" style="gap:6px;"><label>Titolo</label><input id="f_titolo" type="text" value="${titolo}"></div>
+          <div class="field" style="gap:6px;"><label>Cantina</label><input id="f_cantina" type="text" value="${cantina}"></div>
 
-          <div class="field" style="gap:6px;">
-            <label>Tipologia</label>
-            <input id="f_tipologia" type="text" value="${tipologia}">
-          </div>
-          <div class="field" style="gap:6px;">
-            <label>Territorio</label>
-            <input id="f_luogo" type="text" value="${luogo}">
-          </div>
+          <div class="field" style="gap:6px;"><label>Tipologia</label><input id="f_tipologia" type="text" value="${tipologia}"></div>
+          <div class="field" style="gap:6px;"><label>Territorio</label><input id="f_luogo" type="text" value="${luogo}"></div>
 
-          <div class="field" style="gap:6px;">
-            <label>Uvaggio</label>
-            <input id="f_uvaggio" type="text" value="${uvaggio}">
-          </div>
-          <div class="field" style="gap:6px;">
-            <label>Annata</label>
-            <input id="f_annata" type="number" value="${annata}" placeholder="2021">
-          </div>
+          <div class="field" style="gap:6px;"><label>Uvaggio</label><input id="f_uvaggio" type="text" value="${uvaggio}"></div>
+          <div class="field" style="gap:6px;"><label>Annata</label><input id="f_annata" type="number" value="${annata}"></div>
 
-          <div class="field" style="gap:6px;">
-            <label>Prezzo (€)</label>
-            <input id="f_prezzo" type="number" step="0.5" value="${prezzo}" placeholder="12">
-          </div>
+          <div class="field" style="gap:6px;"><label>Prezzo (€)</label><input id="f_prezzo" type="number" step="0.5" value="${prezzo}"></div>
 
           <div class="field" style="gap:6px; align-items:flex-start;">
             <label style="display:flex; gap:10px; align-items:center; margin-top:22px;">
@@ -539,7 +417,7 @@ function wineDetailFormHtml(w) {
 
           <div class="field" style="grid-column: 1 / -1; gap:6px;">
             <label>Descrizione</label>
-            <input id="f_descrizione" type="text" value="${descrizione}" placeholder="Note, abbinamenti, ecc.">
+            <input id="f_descrizione" type="text" value="${descrizione}">
           </div>
         </div>
 
@@ -548,9 +426,7 @@ function wineDetailFormHtml(w) {
           ${isNew ? "" : `<button class="btn btn--ghost" id="deleteBtn" type="button">Elimina</button>`}
         </div>
 
-        <div class="detail-small">
-          ${SESSION ? "Puoi modificare: sei autenticato." : "Per salvare devi fare login."}
-        </div>
+        <div class="detail-small">${SESSION ? "Sei autenticato." : "Per salvare devi fare login."}</div>
       </div>
     </div>
   `;
@@ -558,16 +434,16 @@ function wineDetailFormHtml(w) {
 
 function readForm() {
   return {
-    titolo: normalizeText($("#f_titolo")?.value),
-    cantina: normalizeText($("#f_cantina")?.value),
-    tipologia: normalizeText($("#f_tipologia")?.value),
-    luogo: normalizeText($("#f_luogo")?.value),
-    uvaggio: normalizeText($("#f_uvaggio")?.value),
-    annata: toNumber($("#f_annata")?.value),
-    prezzo: toNumber($("#f_prezzo")?.value),
-    descrizione: normalizeText($("#f_descrizione")?.value),
-    immagine_url: normalizeText($("#f_immagine_url")?.value),
-    in_evidenza: !!$("#f_in_evidenza")?.checked,
+    titolo: normalizeText($("#f_titolo").value),
+    cantina: normalizeText($("#f_cantina").value),
+    tipologia: normalizeText($("#f_tipologia").value),
+    luogo: normalizeText($("#f_luogo").value),
+    uvaggio: normalizeText($("#f_uvaggio").value),
+    annata: toNumber($("#f_annata").value),
+    prezzo: toNumber($("#f_prezzo").value),
+    descrizione: normalizeText($("#f_descrizione").value),
+    immagine_url: normalizeText($("#f_immagine_url").value),
+    in_evidenza: !!$("#f_in_evidenza").checked,
   };
 }
 
@@ -583,9 +459,17 @@ async function onCreate() {
   await insertWine(payload);
 }
 
-/* =========================
-   EVENTS
-========================= */
+function handleRoute() {
+  const hash = location.hash || "";
+  const m = hash.match(/#wine=([^&]+)/);
+  const id = m ? decodeURIComponent(m[1]) : null;
+  if (id && BY_ID.has(String(id))) showDetail(String(id));
+  else showList();
+}
+
+/* -------------------------
+   EVENTS + RELOAD
+------------------------- */
 function bindEvents() {
   const bind = (node, evt) => node && node.addEventListener(evt, applyFilters);
 
@@ -614,12 +498,9 @@ function bindEvents() {
   window.addEventListener("hashchange", handleRoute);
 }
 
-/* =========================
-   RELOAD HELPERS
-========================= */
 async function reloadAndGoList() {
   await fetchWines();
-  hydrateFilterOptions();
+  hydrateFilters();
   applyFilters();
   location.hash = "";
   showList();
@@ -628,30 +509,22 @@ async function reloadAndGoList() {
 
 async function reloadAndStayDetail(id) {
   await fetchWines();
-  hydrateFilterOptions();
+  hydrateFilters();
   applyFilters();
   location.hash = `#wine=${encodeURIComponent(id)}`;
   showDetail(id);
   setTimeout(() => setHint(""), 900);
 }
 
-/* =========================
+/* -------------------------
    START
-========================= */
+------------------------- */
 (async function start() {
-  if (!supabase) {
-    alert("Manca supabase-js. Aggiungi lo script CDN in admin.html.");
-    return;
-  }
-
   injectAuthUI();
   bindEvents();
-
   await refreshSession();
   await fetchWines();
-  hydrateFilterOptions();
+  hydrateFilters();
   applyFilters();
   handleRoute();
 })();
-
-
