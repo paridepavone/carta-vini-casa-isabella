@@ -2,222 +2,199 @@
 <html lang="it">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Admin — Le Cantine del Duca</title>
+  <meta name="robots" content="noindex,nofollow" />
 
+  <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#4a0f1d">
-  <link rel="apple-touch-icon" href="logo.png">
-  <link rel="stylesheet" href="./styles.css" />
+
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Admin Cantina">
+  <link rel="apple-touch-icon" href="./logo.png">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 
-  <!-- ✅ Supabase v2 UMD (non module): perfetto per GitHub Pages -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
-
-  <script>
-    // Service worker (se già lo usi)
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').catch(()=>{});
-      });
-    }
-  </script>
+  <link rel="stylesheet" href="./styles.css" />
 </head>
 
 <body>
   <header class="topbar">
     <div class="topbar__inner">
       <div class="brand">
-        <img src="logo.png" alt="Logo Le Cantine del Duca" class="brand__logo">
+        <img src="./logo.png" alt="Logo Le Cantine del Duca" class="brand__logo" loading="eager" decoding="async">
         <div class="brand__txt">
-          <div class="brand__name">Le Cantine del Duca</div>
-          <div class="brand__sub">Admin · gestione carta vini</div>
+          <div class="brand__name">Admin</div>
+          <div class="brand__sub">Gestione carta vini</div>
         </div>
       </div>
 
       <div class="topbar__right">
-        <div class="status" id="hint">—</div>
-        <div class="pill">
-          <span>Vini</span>
-          <strong id="countPill">0</strong>
-        </div>
+        <div class="status" id="hint" aria-live="polite"></div>
+        <a class="btn btn--ghost" href="./index.html" style="text-decoration:none;">Apri Carta</a>
       </div>
     </div>
   </header>
 
-  <main class="wrap">
-
-    <!-- =====================
-         LOGIN
-    ====================== -->
-    <section class="panel auth" id="authView">
+  <main class="admin-wrap">
+    <!-- LOGIN -->
+    <section class="panel admin-panel" id="loginPanel">
       <div class="panel__head">
-        <h2>Accesso Admin</h2>
-        <p>Inserisci email e password (Supabase Auth).</p>
+        <h2>Accesso</h2>
+        <p>Usa email e password create in Supabase Auth.</p>
       </div>
 
-      <div class="auth__grid">
-        <div class="field">
-          <label for="email">Email</label>
-          <input id="email" type="email" placeholder="es. admin@..." autocomplete="username">
+      <div style="padding:16px 18px 18px;">
+        <div class="admin-row">
+          <div class="field">
+            <label for="email">Email</label>
+            <input id="email" type="email" placeholder="es. admin@cantina.it" autocomplete="username">
+          </div>
+
+          <div class="field">
+            <label for="password">Password</label>
+            <input id="password" type="password" placeholder="••••••••" autocomplete="current-password">
+          </div>
+
+          <div class="admin-actions">
+            <button class="btn" id="loginBtn" type="button">Entra</button>
+          </div>
         </div>
 
-        <div class="field">
-          <label for="password">Password</label>
-          <input id="password" type="password" placeholder="••••••••" autocomplete="current-password">
+        <div style="margin-top:10px; color: var(--muted); font-size:12px;">
+          Nota: se non entra, controlla in Supabase → Authentication → Users e che la password sia corretta.
         </div>
-
-        <div class="actions">
-          <button class="btn btn--soft" id="loginBtn" type="button">Entra</button>
-          <button class="btn btn--ghost" id="logoutBtn" type="button" style="display:none;">Esci</button>
-        </div>
-      </div>
-
-      <div class="auth__note">
-        <span class="muted">Se il login non va, controlla che l’utente esista in Supabase → Authentication → Users.</span>
       </div>
     </section>
 
-    <!-- =====================
-         LISTA + FILTRI
-    ====================== -->
-    <section id="listView" style="display:none;">
-      <section class="panel filters" aria-label="Filtri admin">
-        <div class="panel__head">
-          <h2>Archivio vini</h2>
-          <p>Cerca, filtra e apri un vino per modificarlo. “Nuovo vino” crea una nuova scheda.</p>
-        </div>
-
-        <div class="filters__grid adminFilters">
-          <div class="field field--full">
-            <label for="q">Cerca (titolo/cantina)</label>
-            <input id="q" type="search" placeholder="Es. Amarone, Gaja..." />
-          </div>
-
-          <div class="field">
-            <label for="tipologia">Tipologia</label>
-            <select id="tipologia"><option value="">Tutte</option></select>
-          </div>
-
-          <div class="field">
-            <label for="luogo">Territorio</label>
-            <select id="luogo"><option value="">Tutti</option></select>
-          </div>
-
-          <div class="field">
-            <label for="uvaggio">Uvaggio</label>
-            <select id="uvaggio"><option value="">Tutti</option></select>
-          </div>
-
-          <div class="field">
-            <label for="annata">Annata</label>
-            <select id="annata"><option value="">Tutte</option></select>
-          </div>
-
-          <div class="field">
-            <label for="prezzoMax">Prezzo max (€)</label>
-            <input id="prezzoMax" type="number" min="0" step="1" placeholder="Es. 35" />
-          </div>
-
-          <div class="actions">
-            <button class="btn btn--soft" id="newBtn" type="button">+ Nuovo vino</button>
-            <button class="btn btn--ghost" id="resetBtn" type="button">Reset</button>
-            <button class="btn btn--ghost" id="refreshBtn" type="button">Aggiorna</button>
-          </div>
-        </div>
-      </section>
-
-      <section class="grid" id="grid" aria-label="Lista vini admin"></section>
-    </section>
-
-    <!-- =====================
-         EDITOR
-    ====================== -->
-    <section id="editView" style="display:none;">
-      <div class="detailTop">
-        <button class="btn btn--ghost" id="backBtn" type="button">← Torna alla lista</button>
+    <!-- APP -->
+    <section class="panel admin-panel" id="appPanel" style="display:none;">
+      <div class="panel__head">
+        <h2>Vini</h2>
+        <p>Aggiungi, modifica o elimina etichette.</p>
       </div>
 
-      <section class="panel editor">
-        <div class="panel__head">
-          <h2 id="editorTitle">Nuovo vino</h2>
-          <p id="editorSub">Compila i campi e salva. Le immagini arrivano da <span class="muted">immagine_url</span>.</p>
+      <div style="padding:16px 18px 18px;">
+        <div class="admin-row">
+          <div class="field">
+            <label for="adminSearch">Cerca</label>
+            <input id="adminSearch" type="search" placeholder="Titolo / Cantina / Tipologia…">
+          </div>
+
+          <div class="admin-actions">
+            <button class="btn" id="newBtn" type="button">+ Nuovo vino</button>
+            <button class="btn btn--ghost" id="logoutBtn" type="button">Logout</button>
+          </div>
         </div>
 
-        <div class="editor__grid">
-          <div class="field field--full">
-            <label for="e_titolo">Titolo *</label>
-            <input id="e_titolo" type="text" placeholder="Es. Barolo DOCG..." />
-          </div>
+        <table class="table" id="table">
+          <thead>
+            <tr>
+              <th>Titolo</th>
+              <th>Cantina</th>
+              <th>Tipologia</th>
+              <th>Territorio</th>
+              <th style="width:120px;">Prezzo</th>
+              <th style="width:170px;">Azioni</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
 
-          <div class="field">
-            <label for="e_cantina">Cantina</label>
-            <input id="e_cantina" type="text" placeholder="Es. Gaja" />
-          </div>
-
-          <div class="field">
-            <label for="e_tipologia">Tipologia</label>
-            <input id="e_tipologia" type="text" placeholder="Rosso / Bianco / Bollicina..." />
-          </div>
-
-          <div class="field">
-            <label for="e_luogo">Territorio</label>
-            <input id="e_luogo" type="text" placeholder="Piemonte / Toscana..." />
-          </div>
-
-          <div class="field">
-            <label for="e_annata">Annata</label>
-            <input id="e_annata" type="number" min="0" step="1" placeholder="Es. 2019" />
-          </div>
-
-          <div class="field">
-            <label for="e_uvaggio">Uvaggio</label>
-            <input id="e_uvaggio" type="text" placeholder="Nebbiolo..." />
-          </div>
-
-          <div class="field">
-            <label for="e_prezzo">Prezzo (€)</label>
-            <input id="e_prezzo" type="number" min="0" step="0.5" placeholder="Es. 12" />
-          </div>
-
-          <div class="field field--full">
-            <label for="e_immagine_url">immagine_url</label>
-            <input id="e_immagine_url" type="url" placeholder="https://...supabase.../..." />
-            <div class="help">Incolla l’URL pubblico dell’immagine (Supabase Storage).</div>
-          </div>
-
-          <div class="field field--full">
-            <label for="e_descrizione">Descrizione</label>
-            <textarea id="e_descrizione" rows="6" placeholder="Note, descrizione breve, abbinamenti..."></textarea>
-          </div>
-
-          <div class="actions actions--spread">
-            <div class="left">
-              <button class="btn btn--soft" id="saveBtn" type="button">Salva</button>
-              <button class="btn btn--ghost" id="saveNewBtn" type="button">Salva + Nuovo</button>
-            </div>
-            <div class="right">
-              <button class="btn btn--danger" id="deleteBtn" type="button" style="display:none;">Elimina</button>
-            </div>
-          </div>
-
-          <div class="muted small" id="editorMeta"></div>
+        <div id="emptyAdmin" class="empty" style="display:none; margin-top:14px;">
+          <div class="empty__title">Nessun vino</div>
+          <div class="empty__text">Crea la prima etichetta con “Nuovo vino”.</div>
         </div>
-      </section>
+      </div>
     </section>
-
   </main>
 
-  <footer class="footer">
-    <div class="footer__inner">
-      <span>Le Cantine del Duca</span>
-      <span class="dot">•</span>
-      <span>Admin PWA</span>
-    </div>
-  </footer>
+  <!-- MODAL -->
+  <div class="modal" id="modal" aria-hidden="true">
+    <div class="modal__card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal__head">
+        <h3 class="modal__title" id="modalTitle">Vino</h3>
+        <button class="btn btn--ghost" id="closeModalBtn" type="button">Chiudi</button>
+      </div>
 
+      <div class="modal__body">
+        <div class="modal__grid">
+          <div class="field field--span2">
+            <label for="f_titolo">Titolo</label>
+            <input id="f_titolo" type="text" placeholder="Es. Barolo DOCG">
+          </div>
+
+          <div class="field">
+            <label for="f_cantina">Cantina</label>
+            <input id="f_cantina" type="text" placeholder="Es. Gaja">
+          </div>
+
+          <div class="field">
+            <label for="f_tipologia">Tipologia</label>
+            <input id="f_tipologia" type="text" placeholder="Es. Rosso / Bianco / Bollicine">
+          </div>
+
+          <div class="field">
+            <label for="f_luogo">Territorio</label>
+            <input id="f_luogo" type="text" placeholder="Es. Piemonte">
+          </div>
+
+          <div class="field" id="f_uvaggio_wrap">
+            <label for="f_uvaggio">Uvaggio (se presente)</label>
+            <input id="f_uvaggio" type="text" placeholder="Es. Nebbiolo">
+          </div>
+
+          <div class="field" id="f_annata_wrap">
+            <label for="f_annata">Annata (se presente)</label>
+            <input id="f_annata" type="number" min="0" step="1" placeholder="Es. 2019">
+          </div>
+
+          <div class="field">
+            <label for="f_prezzo">Prezzo (€)</label>
+            <input id="f_prezzo" type="number" min="0" step="0.5" placeholder="Es. 45">
+          </div>
+
+          <div class="field field--span2">
+            <label for="f_immagine">URL Immagine (Supabase Storage o URL pubblico)</label>
+            <input id="f_immagine" type="url" placeholder="https://...">
+          </div>
+
+          <div class="field field--span2">
+            <label for="f_descrizione">Descrizione</label>
+            <textarea id="f_descrizione" placeholder="Note, stile, abbinamenti…"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal__foot">
+        <button class="btn btn--ghost" id="deleteBtn" type="button" style="margin-right:auto;">Elimina</button>
+        <button class="btn btn--ghost" id="cancelBtn" type="button">Annulla</button>
+        <button class="btn" id="saveBtn" type="button">Salva</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Supabase (UMD) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.1/dist/umd/supabase.min.js"></script>
+
+  <!-- Config -->
+  <script src="./config.js"></script>
+
+  <!-- Admin logic -->
   <script src="./admin.js"></script>
+
+  <!-- Service Worker -->
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js")
+          .then((reg) => console.log("PWA: Service Worker OK", reg))
+          .catch((err) => console.log("PWA: Errore SW", err));
+      });
+    }
+  </script>
 </body>
 </html>
