@@ -1,34 +1,22 @@
 /* =========================================================
-   CARTA VINI — Supabase (public.vini)
+   CARTA VINI — Google Sheet (via Apps Script API)
    - Lista + filtri + dettaglio
-   - Compatibile con tabella: id, titolo, cantina, tipologia, annata, prezzo, descrizione, immagine_url
    ========================================================= */
 
-const SUPABASE_URL = "https://bxdermzgfunwpvgektnz.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ4ZGVybXpnZnVud3B2Z2VrdG56Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3MDk1NzksImV4cCI6MjA4NjI4NTU3OX0.yIr_RtG2WDDl09l5MY2MWFd2PnnoE0L3c0uVxBBzQCE";
-const TABLE = "vini";
+const API_URL = "https://script.google.com/macros/s/AKfycbwoq8GsuGJUsvXKTFYOFwklq2-jpmvR5va-1rm0U2hMW_QkLDz1azrQmDfO5A8DhflK/exec";
 
-if (!window.supabase?.createClient) {
-  alert("Manca supabase-js. In index.html aggiungi prima di script.js:\n<script src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'></script>");
-  throw new Error("supabase-js missing");
-}
-
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-/* =========================
-   STATE + DOM
-========================= */
+// STATE
 let ALL = [];
 let FILTERED = [];
 let BY_ID = new Map();
 
+// DOM
 const $ = (s) => document.querySelector(s);
-
 const el = {
   q: $("#q"),
   tipologia: $("#tipologia"),
-  luogo: $("#luogo"),      // in tabella non c’è: lo disattiviamo se vuoto
-  uvaggio: $("#uvaggio"),  // in tabella non c’è: lo disattiviamo se vuoto
+  luogo: $("#luogo"),
+  uvaggio: $("#uvaggio"),
   annata: $("#annata"),
   prezzoMax: $("#prezzoMax"),
   resetBtn: $("#resetBtn"),
@@ -43,9 +31,7 @@ const el = {
   backBtn: $("#backBtn"),
 };
 
-function setHint(msg) { if (el.hint) el.hint.textContent = msg || ""; }
-function setCount(n) { if (el.countPill) el.countPill.textContent = String(n ?? 0); }
-
+// UTILS
 function esc(str) {
   return String(str ?? "")
     .replaceAll("&", "&amp;")
@@ -54,27 +40,35 @@ function esc(str) {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
 }
-
 function norm(v) { return String(v ?? "").trim(); }
-
 function toNumber(v) {
   if (v === null || v === undefined || v === "") return null;
   const n = Number(String(v).replace(",", "."));
   return Number.isFinite(n) ? n : null;
 }
-
 function fmtPrice(n) {
   const num = toNumber(n);
   if (num === null) return "";
   return new Intl.NumberFormat("it-IT", { maximumFractionDigits: 2 }).format(num);
 }
-
 function sortAlpha(a, b) {
   return String(a).localeCompare(String(b), "it", { sensitivity: "base" });
 }
-
 function uniqSorted(arr) {
   return Array.from(new Set(arr.filter(Boolean))).sort(sortAlpha);
+}
+function setHint(msg) { if (el.hint) el.hint.textContent = msg || ""; }
+function setCount(n) { if (el.countPill) el.countPill.textContent = String(n ?? 0); }
+
+function getFilters() {
+  return {
+    q: norm(el.q?.value).toLowerCase(),
+    tipologia: norm(el.tipologia?.value),
+    luogo: norm(el.luogo?.value),
+    uvaggio: norm(el.uvaggio?.value),
+    annata: norm(el.annata?.value),
+    prezzoMax: toNumber(el.prezzoMax?.value),
+  };
 }
 
 function fillSelect(selectEl, options, allLabel) {
@@ -86,49 +80,31 @@ function fillSelect(selectEl, options, allLabel) {
   if (current && options.includes(current)) selectEl.value = current;
 }
 
-function getFilters() {
-  return {
-    q: norm(el.q?.value).toLowerCase(),
-    tipologia: norm(el.tipologia?.value),
-    annata: norm(el.annata?.value),
-    prezzoMax: toNumber(el.prezzoMax?.value),
-    // questi due potrebbero non esistere nel DB: li lasciamo, ma se sono sempre vuoti non filtrano
-    luogo: norm(el.luogo?.value),
-    uvaggio: norm(el.uvaggio?.value),
-  };
-}
-
-/* =========================
-   LOAD
-========================= */
+// LOAD
 async function loadWines() {
-  setHint("Caricamento vini…");
+  setHint("Caricamento…");
 
-  // usa "*" così non esplodi se cambiano colonne
-  const { data, error } = await supabase
-    .from(TABLE)
-    .select("*")
-    .order("titolo", { ascending: true });
+  const res = await fetch(API_URL, { cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-  if (error) throw error;
+  const json = await res.json();
+  const data = Array.isArray(json) ? json : (json.data || []);
 
-  const wines = (data || []).map((w) => ({
-    id: w.id,
+  const wines = data.map((w) => ({
+    id: norm(w.id),
     titolo: norm(w.titolo),
     cantina: norm(w.cantina),
     tipologia: norm(w.tipologia),
+    luogo: norm(w.luogo),
     annata: w.annata ?? null,
+    uvaggio: norm(w.uvaggio),
     prezzo: toNumber(w.prezzo),
     descrizione: norm(w.descrizione),
-    immagine_url: norm(w.immagine_url),
-
-    // campi extra se un giorno li aggiungi
-    luogo: norm(w.luogo),
-    uvaggio: norm(w.uvaggio),
+    immagine: norm(w.immagine || w.immagine_url),
   }));
 
-  ALL = wines.filter((w) => w.id !== null && w.id !== undefined && w.titolo);
-  BY_ID = new Map(ALL.map((w) => [String(w.id), w]));
+  ALL = wines.filter((w) => w.id && w.titolo);
+  BY_ID = new Map(ALL.map((w) => [w.id, w]));
 
   hydrateFilters();
   applyFilters();
@@ -139,53 +115,23 @@ async function loadWines() {
 
 function hydrateFilters() {
   fillSelect(el.tipologia, uniqSorted(ALL.map((w) => w.tipologia)), "Tutte");
+  fillSelect(el.luogo, uniqSorted(ALL.map((w) => w.luogo)), "Tutti");
+  fillSelect(el.uvaggio, uniqSorted(ALL.map((w) => w.uvaggio)), "Tutti");
 
   const annate = uniqSorted(ALL.map((w) => (w.annata ? String(w.annata) : null)))
     .sort((a, b) => Number(b) - Number(a));
   fillSelect(el.annata, annate, "Tutte");
-
-  // luogo/uvaggio: se nel DB sono tutti vuoti, li disattivo in UI
-  const luoghi = uniqSorted(ALL.map((w) => w.luogo));
-  const uvaggi = uniqSorted(ALL.map((w) => w.uvaggio));
-
-  if (el.luogo) {
-    if (!luoghi.length) {
-      el.luogo.disabled = true;
-      el.luogo.innerHTML = `<option value="">(non disponibile)</option>`;
-      el.luogo.closest(".field")?.classList.add("is-disabled");
-    } else {
-      el.luogo.disabled = false;
-      el.luogo.closest(".field")?.classList.remove("is-disabled");
-      fillSelect(el.luogo, luoghi, "Tutti");
-    }
-  }
-
-  if (el.uvaggio) {
-    if (!uvaggi.length) {
-      el.uvaggio.disabled = true;
-      el.uvaggio.innerHTML = `<option value="">(non disponibile)</option>`;
-      el.uvaggio.closest(".field")?.classList.add("is-disabled");
-    } else {
-      el.uvaggio.disabled = false;
-      el.uvaggio.closest(".field")?.classList.remove("is-disabled");
-      fillSelect(el.uvaggio, uvaggi, "Tutti");
-    }
-  }
 }
 
-/* =========================
-   FILTER + RENDER
-========================= */
+// FILTER
 function applyFilters() {
   const f = getFilters();
 
   FILTERED = ALL.filter((w) => {
     if (f.tipologia && w.tipologia !== f.tipologia) return false;
-    if (f.annata && String(w.annata ?? "") !== f.annata) return false;
-
-    // questi filtri entrano solo se hai valori nel DB
     if (f.luogo && w.luogo !== f.luogo) return false;
     if (f.uvaggio && w.uvaggio !== f.uvaggio) return false;
+    if (f.annata && String(w.annata ?? "") !== f.annata) return false;
 
     if (f.prezzoMax !== null && w.prezzo !== null && w.prezzo > f.prezzoMax) return false;
 
@@ -194,12 +140,13 @@ function applyFilters() {
         w.titolo + " " +
         w.cantina + " " +
         w.tipologia + " " +
+        w.luogo + " " +
         (w.annata ?? "") + " " +
+        w.uvaggio + " " +
         w.descrizione
       ).toLowerCase();
       if (!hay.includes(f.q)) return false;
     }
-
     return true;
   });
 
@@ -215,6 +162,7 @@ function applyFilters() {
   renderGrid(FILTERED);
 }
 
+// RENDER LIST
 function renderGrid(items) {
   if (!el.grid) return;
 
@@ -223,8 +171,7 @@ function renderGrid(items) {
       <div class="empty">
         <div class="empty__title">Nessun risultato</div>
         <div class="empty__text">Prova a cambiare filtri o rimuovere il prezzo massimo.</div>
-      </div>
-    `;
+      </div>`;
     return;
   }
 
@@ -247,15 +194,17 @@ function renderGrid(items) {
 
 function wineCardHtml(w) {
   const price = w.prezzo !== null ? `€ ${fmtPrice(w.prezzo)}` : "";
-  const meta = [w.cantina, w.tipologia, w.annata ? String(w.annata) : ""].filter(Boolean).join(" • ");
+  const meta = [w.cantina, w.tipologia, w.luogo, w.annata ? String(w.annata) : ""]
+    .filter(Boolean)
+    .join(" • ");
 
-  const hasImg = !!w.immagine_url;
+  const hasImg = !!w.immagine;
   const imgHtml = hasImg
-    ? `<img class="card__img" src="${esc(w.immagine_url)}" alt="${esc(w.titolo)}" loading="lazy">`
+    ? `<img class="card__img" src="${esc(w.immagine)}" alt="${esc(w.titolo)}" loading="lazy">`
     : `<div class="card__img card__img--ph" aria-hidden="true"><div class="ph__mark">🍷</div></div>`;
 
   return `
-    <article class="card" role="button" tabindex="0" data-wine-id="${esc(String(w.id))}" aria-label="Apri ${esc(w.titolo)}">
+    <article class="card" role="button" tabindex="0" data-wine-id="${esc(w.id)}" aria-label="Apri ${esc(w.titolo)}">
       ${imgHtml}
       <div class="card__body">
         <div class="card__top">
@@ -263,20 +212,18 @@ function wineCardHtml(w) {
           ${price ? `<div class="card__price">${esc(price)}</div>` : ""}
         </div>
         <div class="card__meta">${esc(meta)}</div>
+        ${w.uvaggio ? `<div class="card__uvaggio">${esc(w.uvaggio)}</div>` : ""}
       </div>
-    </article>
-  `;
+    </article>`;
 }
 
-/* =========================
-   ROUTING + DETAIL
-========================= */
+// ROUTE
 function handleRoute() {
   const hash = location.hash || "";
   const m = hash.match(/#wine=([^&]+)/);
   const id = m ? decodeURIComponent(m[1]) : null;
 
-  if (id && BY_ID.has(String(id))) showDetail(String(id));
+  if (id && BY_ID.has(id)) showDetail(id);
   else showList();
 }
 
@@ -287,26 +234,31 @@ function showList() {
 }
 
 function showDetail(id) {
-  const w = BY_ID.get(String(id));
+  const w = BY_ID.get(id);
   if (!w) return showList();
 
   if (el.listView) el.listView.style.display = "none";
   if (el.detailView) el.detailView.style.display = "block";
-
   if (el.detailCard) el.detailCard.innerHTML = wineDetailHtml(w);
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
+function badge(text) {
+  const t = norm(text);
+  if (!t) return "";
+  return `<span class="badge">${esc(t)}</span>`;
+}
+
 function wineDetailHtml(w) {
   const price = w.prezzo !== null ? `€ ${fmtPrice(w.prezzo)}` : "—";
-  const hasImg = !!w.immagine_url;
+  const hasImg = !!w.immagine;
 
   return `
     <div class="detail-card__inner">
       <div class="detail-media">
         ${
           hasImg
-            ? `<img class="detail-media__img" src="${esc(w.immagine_url)}" alt="${esc(w.titolo)}" loading="lazy">`
+            ? `<img class="detail-media__img" src="${esc(w.immagine)}" alt="${esc(w.titolo)}" loading="lazy">`
             : `<div class="detail-media__img detail-media__img--ph"><div class="ph__mark">🍷</div></div>`
         }
       </div>
@@ -318,20 +270,19 @@ function wineDetailHtml(w) {
         </div>
 
         <div class="detail-badges">
-          ${w.cantina ? `<span class="badge">${esc(w.cantina)}</span>` : ""}
-          ${w.tipologia ? `<span class="badge">${esc(w.tipologia)}</span>` : ""}
-          ${w.annata ? `<span class="badge">${esc(String(w.annata))}</span>` : ""}
+          ${badge(w.cantina)}
+          ${badge(w.tipologia)}
+          ${badge(w.luogo)}
+          ${w.annata ? badge(String(w.annata)) : ""}
+          ${w.uvaggio ? badge(w.uvaggio) : ""}
         </div>
 
         ${w.descrizione ? `<p class="detail-desc">${esc(w.descrizione)}</p>` : ""}
       </div>
-    </div>
-  `;
+    </div>`;
 }
 
-/* =========================
-   EVENTS + START
-========================= */
+// EVENTS
 function bindEvents() {
   const bind = (node, evt) => node && node.addEventListener(evt, applyFilters);
 
@@ -343,12 +294,12 @@ function bindEvents() {
   bind(el.prezzoMax, "input");
 
   el.resetBtn?.addEventListener("click", () => {
-    if (el.q) el.q.value = "";
-    if (el.tipologia) el.tipologia.value = "";
-    if (el.luogo) el.luogo.value = "";
-    if (el.uvaggio) el.uvaggio.value = "";
-    if (el.annata) el.annata.value = "";
-    if (el.prezzoMax) el.prezzoMax.value = "";
+    el.q.value = "";
+    el.tipologia.value = "";
+    el.luogo.value = "";
+    el.uvaggio.value = "";
+    el.annata.value = "";
+    el.prezzoMax.value = "";
     applyFilters();
   });
 
@@ -360,6 +311,7 @@ function bindEvents() {
   window.addEventListener("hashchange", handleRoute);
 }
 
+// START
 (async function start() {
   bindEvents();
   try {
@@ -373,8 +325,7 @@ function bindEvents() {
         <div class="empty">
           <div class="empty__title">Errore di caricamento</div>
           <div class="empty__text">Dettaglio: <code>${esc(err?.message || "Errore sconosciuto")}</code></div>
-        </div>
-      `;
+        </div>`;
     }
   }
 })();
