@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Le Cantine del Duca — Carta Vini</title>
 
   <!-- PWA -->
@@ -26,11 +26,11 @@
 <body>
   <header class="topbar">
     <div class="topbar__inner">
-      <div class="brand" role="banner" aria-label="Le Cantine del Duca">
+      <div class="brand" aria-label="Le Cantine del Duca">
         <img src="./logo.png" alt="Logo Le Cantine del Duca" class="brand__logo" />
         <div class="brand__txt">
           <div class="brand__name">Le Cantine del Duca</div>
-          <div class="brand__sub">Selezione aggiornata</div>
+          <div class="brand__sub">Carta vini digitale</div>
         </div>
       </div>
 
@@ -45,43 +45,33 @@
   </header>
 
   <main class="wrap">
-    <!-- LIST VIEW -->
+    <!-- LIST -->
     <section id="listView">
-      <div id="featuredContainer"></div>
-
       <section class="panel filters" aria-label="Filtri di ricerca">
         <div class="filters__grid">
           <div class="field field--full">
             <label for="q">Cerca vino o cantina</label>
-            <input id="q" type="search" inputmode="search" autocomplete="off" placeholder="Es. Amarone, Gaja..." />
+            <input id="q" type="search" inputmode="search" autocomplete="off" placeholder="Es. Amarone, Gaja…" />
           </div>
 
           <div class="field">
             <label for="tipologia">Tipologia</label>
-            <select id="tipologia">
-              <option value="">Tutte</option>
-            </select>
+            <select id="tipologia"><option value="">Tutte</option></select>
           </div>
 
           <div class="field">
             <label for="luogo">Territorio</label>
-            <select id="luogo">
-              <option value="">Tutti</option>
-            </select>
+            <select id="luogo"><option value="">Tutti</option></select>
           </div>
 
           <div class="field">
             <label for="uvaggio">Uvaggio</label>
-            <select id="uvaggio">
-              <option value="">Tutti</option>
-            </select>
+            <select id="uvaggio"><option value="">Tutti</option></select>
           </div>
 
           <div class="field">
             <label for="annata">Annata</label>
-            <select id="annata">
-              <option value="">Tutte</option>
-            </select>
+            <select id="annata"><option value="">Tutte</option></select>
           </div>
 
           <div class="field">
@@ -98,7 +88,7 @@
       <section class="grid" id="grid" aria-label="Lista vini"></section>
     </section>
 
-    <!-- DETAIL VIEW -->
+    <!-- DETAIL -->
     <section id="detailView" style="display:none;">
       <div class="detailTop">
         <button class="btn btn--ghost" id="backBtn" type="button" aria-label="Torna alla lista">← Indietro</button>
@@ -112,23 +102,16 @@
     <div class="footer__inner">
       <span>Le Cantine del Duca</span>
       <span class="dot">•</span>
-      <span>Menù Digitale Offline Ready</span>
+      <span>Menù digitale</span>
     </div>
   </footer>
 
-  <!-- ✅ 1) Supabase JS (OBBLIGATORIO) -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <!-- ✅ 2) App script (qui dentro hai già SUPABASE_URL + SUPABASE_ANON_KEY) -->
   <script src="./script.js"></script>
 
-  <!-- ✅ 3) Service Worker (dopo tutto) -->
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./sw.js")
-          .then((reg) => console.log("PWA: Service Worker OK", reg))
-          .catch((err) => console.log("PWA: Errore SW", err));
+        navigator.serviceWorker.register("./sw.js").catch(() => {});
       });
     }
   </script>
