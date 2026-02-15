@@ -1,24 +1,21 @@
-const CACHE_NAME = 'cantina-duca-v3';
-
+const CACHE_NAME = "cantina-duca-v1";
 const APP_ASSETS = [
-  './',
-  './index.html',
-  './styles.css',
-  './script.js',
-  './manifest.json',
-  './logo.png'
+  "./",
+  "./index.html",
+  "./styles.css",
+  "./script.js",
+  "./manifest.json",
+  "./logo.png"
 ];
 
-// 1) Install
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_ASSETS))
-  );
+// install
+self.addEventListener("install", (event) => {
+  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_ASSETS)));
   self.skipWaiting();
 });
 
-// 2) Activate
-self.addEventListener('activate', (event) => {
+// activate
+self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
@@ -27,32 +24,31 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// 3) Fetch strategy
-self.addEventListener('fetch', (event) => {
-  if (!event.request.url.startsWith('http')) return;
-  if (event.request.method !== 'GET') return;
-
+// fetch: cache-first per asset, network-first per API
+self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
 
-  // NON cacheare Supabase (dati + immagini dinamiche)
-  // così eviti immagini vecchie / token / problemi di aggiornamento
-  if (url.hostname.endsWith('.supabase.co')) {
-    return; // lascia andare in rete
+  // solo http/https
+  if (!url.protocol.startsWith("http")) return;
+
+  // API GAS -> network first
+  if (url.host.includes("script.google.com") || url.host.includes("script.googleusercontent.com")) {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match(event.request))
+    );
+    return;
   }
 
-  // Cache solo della tua app (GitHub Pages) + asset statici
+  // asset -> stale-while-revalidate
   event.respondWith(
-    caches.open(CACHE_NAME).then((cache) =>
-      cache.match(event.request).then((cachedResponse) => {
-        const fetchedResponse = fetch(event.request)
-          .then((networkResponse) => {
-            cache.put(event.request, networkResponse.clone());
-            return networkResponse;
-          })
-          .catch(() => cachedResponse);
+    caches.match(event.request).then((cached) => {
+      const fetched = fetch(event.request).then((resp) => {
+        const copy = resp.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+        return resp;
+      }).catch(() => cached);
 
-        return cachedResponse || fetchedResponse;
-      })
-    )
+      return cached || fetched;
+    })
   );
 });
