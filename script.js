@@ -3,7 +3,8 @@
    - Lista + filtri + dettaglio
    ========================================================= */
 
-const API_URL = "https://script.google.com/macros/s/AKfycbwoq8GsuGJUsvXKTFYOFwklq2-jpmvR5va-1rm0U2hMW_QkLDz1azrQmDfO5A8DhflK/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxEUdhjKyaY-ZWsH787uhxcaBJymNWrUbcPYFjFjJazbBsQF9PH5CSF-b3MHbwRu02/exec";
+
 
 // STATE
 let ALL = [];
