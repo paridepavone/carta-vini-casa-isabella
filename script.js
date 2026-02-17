@@ -1,10 +1,9 @@
 /* =========================================================
-   CARTA VINI — Google Sheet (via Apps Script API)
-   - Lista + filtri + dettaglio
-   ========================================================= */
+CARTA VINI — Google Sheet (via Apps Script API)
+- Lista + filtri + dettaglio
+========================================================= */
 
-const API_URL = "https://script.google.com/macros/s/AKfycbxEUdhjKyaY-ZWsH787uhxcaBJymNWrUbcPYFjFjJazbBsQF9PH5CSF-b3MHbwRu02/exec";
-
+const API_URL = "https://script.google.com/macros/s/AKfycbxEUdhjKyaY-ZWsH787uhxcaBJymNWrUbcPYFjEfJjazbBsQF9PH5CSF-b3MHbwRu02/exec";
 
 // STATE
 let ALL = [];
@@ -21,11 +20,9 @@ const el = {
   annata: $("#annata"),
   prezzoMax: $("#prezzoMax"),
   resetBtn: $("#resetBtn"),
-
   grid: $("#grid"),
   hint: $("#hint"),
   countPill: $("#countPill"),
-
   listView: $("#listView"),
   detailView: $("#detailView"),
   detailCard: $("#detailCard"),
@@ -85,12 +82,18 @@ function fillSelect(selectEl, options, allLabel) {
 async function loadWines() {
   setHint("Caricamento…");
 
-  const res = await fetch(API_URL, { cache: "no-store" });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const url = `${API_URL.trim()}?v=${Date.now()}`; // cache-buster
+  const res = await fetch(url, { cache: "no-store" });
+
+  if (!res.ok) {
+    // prova a leggere body per debug (spesso GAS manda HTML/error)
+    let body = "";
+    try { body = await res.text(); } catch {}
+    throw new Error(`HTTP ${res.status}${body ? " — " + body.slice(0, 120) : ""}`);
+  }
 
   const json = await res.json();
   const data = Array.isArray(json) ? json : (json.data || []);
-
   const wines = data.map((w) => ({
     id: norm(w.id),
     titolo: norm(w.titolo),
@@ -101,7 +104,8 @@ async function loadWines() {
     uvaggio: norm(w.uvaggio),
     prezzo: toNumber(w.prezzo),
     descrizione: norm(w.descrizione),
-    immagine: norm(w.immagine || w.immagine_url),
+    // usa prima immagine_url, altrimenti immagine
+    immagine: norm(w.immagine_url || w.immagine),
   }));
 
   ALL = wines.filter((w) => w.id && w.titolo);
@@ -133,7 +137,6 @@ function applyFilters() {
     if (f.luogo && w.luogo !== f.luogo) return false;
     if (f.uvaggio && w.uvaggio !== f.uvaggio) return false;
     if (f.annata && String(w.annata ?? "") !== f.annata) return false;
-
     if (f.prezzoMax !== null && w.prezzo !== null && w.prezzo > f.prezzoMax) return false;
 
     if (f.q) {
@@ -240,47 +243,34 @@ function showDetail(id) {
 
   if (el.listView) el.listView.style.display = "none";
   if (el.detailView) el.detailView.style.display = "block";
-  if (el.detailCard) el.detailCard.innerHTML = wineDetailHtml(w);
+
+  const price = w.prezzo !== null ? `€ ${fmtPrice(w.prezzo)}` : "";
+  const badges = [w.cantina, w.tipologia, w.luogo, w.annata ? String(w.annata) : "", w.uvaggio]
+    .filter(Boolean)
+    .map((b) => `<span class="badge">${esc(b)}</span>`)
+    .join("");
+
+  const media = w.immagine
+    ? `<img class="detail-media__img" src="${esc(w.immagine)}" alt="${esc(w.titolo)}" loading="lazy">`
+    : `<div class="detail-media__img detail-media__img--ph" aria-hidden="true"></div>`;
+
+  if (el.detailCard) {
+    el.detailCard.innerHTML = `
+      <div class="detail-card__inner">
+        <div class="detail-media">${media}</div>
+        <div class="detail-content">
+          <div class="detail-head">
+            <h1 class="detail-title">${esc(w.titolo)}</h1>
+            ${price ? `<div class="detail-price">${esc(price)}</div>` : ""}
+          </div>
+          <div class="detail-badges">${badges}</div>
+          ${w.descrizione ? `<p class="detail-desc">${esc(w.descrizione)}</p>` : ""}
+        </div>
+      </div>
+    `;
+  }
+
   window.scrollTo({ top: 0, behavior: "smooth" });
-}
-
-function badge(text) {
-  const t = norm(text);
-  if (!t) return "";
-  return `<span class="badge">${esc(t)}</span>`;
-}
-
-function wineDetailHtml(w) {
-  const price = w.prezzo !== null ? `€ ${fmtPrice(w.prezzo)}` : "—";
-  const hasImg = !!w.immagine;
-
-  return `
-    <div class="detail-card__inner">
-      <div class="detail-media">
-        ${
-          hasImg
-            ? `<img class="detail-media__img" src="${esc(w.immagine)}" alt="${esc(w.titolo)}" loading="lazy">`
-            : `<div class="detail-media__img detail-media__img--ph"><div class="ph__mark">🍷</div></div>`
-        }
-      </div>
-
-      <div class="detail-info">
-        <div class="detail-head">
-          <h2 class="detail-title">${esc(w.titolo)}</h2>
-          <div class="detail-price">${esc(price)}</div>
-        </div>
-
-        <div class="detail-badges">
-          ${badge(w.cantina)}
-          ${badge(w.tipologia)}
-          ${badge(w.luogo)}
-          ${w.annata ? badge(String(w.annata)) : ""}
-          ${w.uvaggio ? badge(w.uvaggio) : ""}
-        </div>
-
-        ${w.descrizione ? `<p class="detail-desc">${esc(w.descrizione)}</p>` : ""}
-      </div>
-    </div>`;
 }
 
 // EVENTS
