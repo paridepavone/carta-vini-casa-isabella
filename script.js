@@ -3,7 +3,7 @@ CARTA VINI — Google Sheet (via Apps Script API)
 - Lista + filtri + dettaglio
 ========================================================= */
 
-const API_URL = "https://script.google.com/macros/s/AKfycbxEUdhjKyaY-ZWsH787uhxcaBJymNWrUbcPYFjEfJjazbBsQF9PH5CSF-b3MHbwRu02/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxO3dF6EinCF5ilRQk01DQaPXgNk8yV_6uy2LENdVbEtmbUQxpj0SxHZ_S61LxOV2Ff/exec";
 
 // STATE
 let ALL = [];
@@ -320,3 +320,5 @@ function bindEvents() {
     }
   }
 })();
+
+
