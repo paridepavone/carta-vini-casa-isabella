@@ -1,6 +1,6 @@
 /* =========================================================
-CARTA VINI — Google Sheet (via Apps Script API)
-- Lista + filtri + dettaglio
+CARTA VINI — Le Cantine del Duca
+Configurato per la nuova intestazione Google Sheet
 ========================================================= */
 
 const API_URL = "https://script.google.com/macros/s/AKfycbxO3dF6EinCF5ilRQk01DQaPXgNk8yV_6uy2LENdVbEtmbUQxpj0SxHZ_S61LxOV2Ff/exec";
@@ -41,250 +41,180 @@ function esc(str) {
 function norm(v) { return String(v ?? "").trim(); }
 function toNumber(v) {
   if (v === null || v === undefined || v === "") return null;
-  const n = Number(String(v).replace(",", "."));
-  return Number.isFinite(n) ? n : null;
-}
-function fmtPrice(n) {
-  const num = toNumber(n);
-  if (num === null) return "";
-  return new Intl.NumberFormat("it-IT", { maximumFractionDigits: 2 }).format(num);
-}
-function sortAlpha(a, b) {
-  return String(a).localeCompare(String(b), "it", { sensitivity: "base" });
-}
-function uniqSorted(arr) {
-  return Array.from(new Set(arr.filter(Boolean))).sort(sortAlpha);
-}
-function setHint(msg) { if (el.hint) el.hint.textContent = msg || ""; }
-function setCount(n) { if (el.countPill) el.countPill.textContent = String(n ?? 0); }
-
-function getFilters() {
-  return {
-    q: norm(el.q?.value).toLowerCase(),
-    tipologia: norm(el.tipologia?.value),
-    luogo: norm(el.luogo?.value),
-    uvaggio: norm(el.uvaggio?.value),
-    annata: norm(el.annata?.value),
-    prezzoMax: toNumber(el.prezzoMax?.value),
-  };
+  if (typeof v === "number") return v;
+  let s = String(v).replace(/[^0-9.,]/g, "").replace(",", ".");
+  let n = parseFloat(s);
+  return isNaN(n) ? null : n;
 }
 
-function fillSelect(selectEl, options, allLabel) {
-  if (!selectEl) return;
-  const current = selectEl.value;
-  selectEl.innerHTML =
-    `<option value="">${esc(allLabel)}</option>` +
-    options.map((o) => `<option value="${esc(o)}">${esc(o)}</option>`).join("");
-  if (current && options.includes(current)) selectEl.value = current;
-}
-
-// LOAD
+// FETCH DATA
 async function loadWines() {
-  setHint("Caricamento…");
+  el.grid.innerHTML = '<div class="loading">Caricamento carta vini...</div>';
+  
+  try {
+    const resp = await fetch(API_URL, { cache: "no-store" });
+    const raw = await resp.json();
 
-  const url = `${API_URL.trim()}?v=${Date.now()}`; // cache-buster
-  const res = await fetch(url, { cache: "no-store" });
+    // MAPPATURA NUOVE COLONNE
+    ALL = raw.map((item, index) => {
+      return {
+        // Usiamo 'idcantina' come titolo e ID unico
+        id: norm(item.idcantina) || `v-${index}`,
+        titolo: norm(item.idcantina), 
+        tipologia: norm(item.tipologia),
+        luogo: norm(item.luogo),
+        annata: norm(item.annata),
+        uvaggio: norm(item.uvaggio),
+        prezzo: toNumber(item.prezzo),
+        // Uniamo le varie descrizioni per il dettaglio
+        descrizione: norm(item.descrizione) || norm(item["Note Degustative"]),
+        immagine: norm(item.immagine),
+        abbinamenti: norm(item.Abbinamenti)
+      };
+    });
 
-  if (!res.ok) {
-    // prova a leggere body per debug (spesso GAS manda HTML/error)
-    let body = "";
-    try { body = await res.text(); } catch {}
-    throw new Error(`HTTP ${res.status}${body ? " — " + body.slice(0, 120) : ""}`);
+    // Crea Mappa per dettaglio rapido
+    BY_ID.clear();
+    ALL.forEach(w => BY_ID.set(w.id, w));
+
+    populateFilters(ALL);
+    applyFilters();
+    handleRoute();
+
+  } catch (err) {
+    el.grid.innerHTML = `<div class="error">Errore nel caricamento: <code>${err.message}</code></div>`;
   }
-
-  const json = await res.json();
-  const data = Array.isArray(json) ? json : (json.data || []);
-  const wines = data.map((w) => ({
-    id: norm(w.id),
-    titolo: norm(w.titolo),
-    cantina: norm(w.cantina),
-    tipologia: norm(w.tipologia),
-    luogo: norm(w.luogo),
-    annata: w.annata ?? null,
-    uvaggio: norm(w.uvaggio),
-    prezzo: toNumber(w.prezzo),
-    descrizione: norm(w.descrizione),
-    // usa prima immagine_url, altrimenti immagine
-    immagine: norm(w.immagine_url || w.immagine),
-  }));
-
-  ALL = wines.filter((w) => w.id && w.titolo);
-  BY_ID = new Map(ALL.map((w) => [w.id, w]));
-
-  hydrateFilters();
-  applyFilters();
-  handleRoute();
-
-  setHint(`Archivio: ${ALL.length} etichette`);
 }
 
-function hydrateFilters() {
-  fillSelect(el.tipologia, uniqSorted(ALL.map((w) => w.tipologia)), "Tutte");
-  fillSelect(el.luogo, uniqSorted(ALL.map((w) => w.luogo)), "Tutti");
-  fillSelect(el.uvaggio, uniqSorted(ALL.map((w) => w.uvaggio)), "Tutti");
+// POPOLA FILTRI DINAMICI
+function populateFilters(data) {
+  const getUnique = (key) => [...new Set(data.map(i => i[key]).filter(v => v !== ""))].sort((a,b) => a.localeCompare(b, 'it'));
 
-  const annate = uniqSorted(ALL.map((w) => (w.annata ? String(w.annata) : null)))
-    .sort((a, b) => Number(b) - Number(a));
-  fillSelect(el.annata, annate, "Tutte");
+  const fill = (select, vals) => {
+    if(!select) return;
+    const current = select.value;
+    select.innerHTML = '<option value="">Tutti</option>' + 
+      vals.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join("");
+    select.value = current;
+  };
+
+  fill(el.tipologia, getUnique("tipologia"));
+  fill(el.luogo, getUnique("luogo"));
+  fill(el.uvaggio, getUnique("uvaggio"));
+  fill(el.annata, getUnique("annata").sort((a,b) => b - a)); // Annate decrescenti
 }
 
-// FILTER
+// FILTRA E RENDERING
 function applyFilters() {
-  const f = getFilters();
+  const q = norm(el.q.value).toLowerCase();
+  const tip = el.tipologia.value;
+  const luo = el.luogo.value;
+  const uva = el.uvaggio.value;
+  const ann = el.annata.value;
+  const pMax = toNumber(el.prezzoMax.value);
 
-  FILTERED = ALL.filter((w) => {
-    if (f.tipologia && w.tipologia !== f.tipologia) return false;
-    if (f.luogo && w.luogo !== f.luogo) return false;
-    if (f.uvaggio && w.uvaggio !== f.uvaggio) return false;
-    if (f.annata && String(w.annata ?? "") !== f.annata) return false;
-    if (f.prezzoMax !== null && w.prezzo !== null && w.prezzo > f.prezzoMax) return false;
-
-    if (f.q) {
-      const hay = (
-        w.titolo + " " +
-        w.cantina + " " +
-        w.tipologia + " " +
-        w.luogo + " " +
-        (w.annata ?? "") + " " +
-        w.uvaggio + " " +
-        w.descrizione
-      ).toLowerCase();
-      if (!hay.includes(f.q)) return false;
+  FILTERED = ALL.filter(w => {
+    if (tip && w.tipologia !== tip) return false;
+    if (luo && w.luogo !== luo) return false;
+    if (uva && w.uvaggio !== uva) return false;
+    if (ann && w.annata !== ann) return false;
+    if (pMax !== null && w.prezzo !== null && w.prezzo > pMax) return false;
+    
+    if (q) {
+      const haystack = `${w.titolo} ${w.tipologia} ${w.luogo} ${w.uvaggio} ${w.descrizione}`.toLowerCase();
+      if (!haystack.includes(q)) return false;
     }
     return true;
   });
 
-  FILTERED.sort((a, b) => {
-    const t1 = sortAlpha(a.tipologia, b.tipologia);
-    if (t1 !== 0) return t1;
-    const t2 = sortAlpha(a.titolo, b.titolo);
-    if (t2 !== 0) return t2;
-    return Number(b.annata || 0) - Number(a.annata || 0);
-  });
-
-  setCount(FILTERED.length);
-  renderGrid(FILTERED);
+  renderGrid();
 }
 
-// RENDER LIST
-function renderGrid(items) {
-  if (!el.grid) return;
-
-  if (!items.length) {
-    el.grid.innerHTML = `
-      <div class="empty">
-        <div class="empty__title">Nessun risultato</div>
-        <div class="empty__text">Prova a cambiare filtri o rimuovere il prezzo massimo.</div>
-      </div>`;
+function renderGrid() {
+  el.countPill.textContent = `${FILTERED.length} vini`;
+  
+  if (FILTERED.length === 0) {
+    el.grid.innerHTML = '<div class="empty">Nessun vino trovato con questi filtri.</div>';
     return;
   }
 
-  el.grid.innerHTML = items.map(wineCardHtml).join("");
-
-  el.grid.querySelectorAll("[data-wine-id]").forEach((card) => {
-    const open = () => {
-      const id = card.getAttribute("data-wine-id");
-      location.hash = `#wine=${encodeURIComponent(id)}`;
-    };
-    card.addEventListener("click", open);
-    card.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        open();
-      }
-    });
-  });
-}
-
-function wineCardHtml(w) {
-  const price = w.prezzo !== null ? `€ ${fmtPrice(w.prezzo)}` : "";
-  const meta = [w.cantina, w.tipologia, w.luogo, w.annata ? String(w.annata) : ""]
-    .filter(Boolean)
-    .join(" • ");
-
-  const hasImg = !!w.immagine;
-  const imgHtml = hasImg
-    ? `<img class="card__img" src="${esc(w.immagine)}" alt="${esc(w.titolo)}" loading="lazy">`
-    : `<div class="card__img card__img--ph" aria-hidden="true"><div class="ph__mark">🍷</div></div>`;
-
-  return `
-    <article class="card" role="button" tabindex="0" data-wine-id="${esc(w.id)}" aria-label="Apri ${esc(w.titolo)}">
-      ${imgHtml}
-      <div class="card__body">
-        <div class="card__top">
-          <h3 class="card__title">${esc(w.titolo)}</h3>
-          ${price ? `<div class="card__price">${esc(price)}</div>` : ""}
-        </div>
-        <div class="card__meta">${esc(meta)}</div>
-        ${w.uvaggio ? `<div class="card__uvaggio">${esc(w.uvaggio)}</div>` : ""}
+  el.grid.innerHTML = FILTERED.map(w => `
+    <article class="card" onclick="location.hash='wine=${encodeURIComponent(w.id)}'">
+      <div class="card__img">
+        ${w.immagine ? `<img src="${w.immagine}" alt="${esc(w.titolo)}" loading="lazy">` : `<span class="emoji">🍷</span>`}
       </div>
-    </article>`;
+      <div class="card__body">
+        <div class="card__cat">${esc(w.tipologia)}</div>
+        <h3 class="card__title">${esc(w.titolo)}</h3>
+        <div class="card__meta">${esc(w.luogo)}${w.annata ? ' · ' + esc(w.annata) : ''}</div>
+        <div class="card__foot">
+          <span class="card__price">${w.prezzo ? w.prezzo.toFixed(2).replace('.',',') + ' €' : '—'}</span>
+          <span class="card__more">Dettaglio →</span>
+        </div>
+      </div>
+    </article>
+  `).join("");
 }
 
-// ROUTE
+// ROUTING & DETTAGLIO
 function handleRoute() {
-  const hash = location.hash || "";
-  const m = hash.match(/#wine=([^&]+)/);
-  const id = m ? decodeURIComponent(m[1]) : null;
-
-  if (id && BY_ID.has(id)) showDetail(id);
-  else showList();
+  const hash = location.hash.replace("#", "");
+  if (hash.startsWith("wine=")) {
+    const id = decodeURIComponent(hash.split("=")[1]);
+    showDetail(id);
+  } else {
+    showList();
+  }
 }
 
 function showList() {
-  if (el.detailView) el.detailView.style.display = "none";
-  if (el.listView) el.listView.style.display = "block";
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  el.listView.style.display = "block";
+  el.detailView.style.display = "none";
+  document.title = "Le Cantine del Duca — Carta Vini";
 }
 
 function showDetail(id) {
   const w = BY_ID.get(id);
-  if (!w) return showList();
+  if (!w) { location.hash = ""; return; }
 
-  if (el.listView) el.listView.style.display = "none";
-  if (el.detailView) el.detailView.style.display = "block";
+  el.listView.style.display = "none";
+  el.detailView.style.display = "block";
+  document.title = `${w.titolo} — Dettaglio`;
 
-  const price = w.prezzo !== null ? `€ ${fmtPrice(w.prezzo)}` : "";
-  const badges = [w.cantina, w.tipologia, w.luogo, w.annata ? String(w.annata) : "", w.uvaggio]
-    .filter(Boolean)
-    .map((b) => `<span class="badge">${esc(b)}</span>`)
+  const badges = [w.tipologia, w.luogo, w.annata, w.uvaggio]
+    .filter(v => v !== "")
+    .map(v => `<span class="badge">${esc(v)}</span>`)
     .join("");
 
-  const media = w.immagine
-    ? `<img class="detail-media__img" src="${esc(w.immagine)}" alt="${esc(w.titolo)}" loading="lazy">`
-    : `<div class="detail-media__img detail-media__img--ph" aria-hidden="true"></div>`;
-
-  if (el.detailCard) {
-    el.detailCard.innerHTML = `
-      <div class="detail-card__inner">
-        <div class="detail-media">${media}</div>
-        <div class="detail-content">
-          <div class="detail-head">
-            <h1 class="detail-title">${esc(w.titolo)}</h1>
-            ${price ? `<div class="detail-price">${esc(price)}</div>` : ""}
-          </div>
-          <div class="detail-badges">${badges}</div>
-          ${w.descrizione ? `<p class="detail-desc">${esc(w.descrizione)}</p>` : ""}
-        </div>
+  el.detailCard.innerHTML = `
+    <div class="detail-grid">
+      <div class="detail-media">
+        ${w.immagine ? `<img src="${w.immagine}" alt="${esc(w.titolo)}">` : `<div class="detail-placeholder">🍷</div>`}
       </div>
-    `;
-  }
-
-  window.scrollTo({ top: 0, behavior: "smooth" });
+      <div class="detail-info">
+        <div class="detail-head">
+          <h1 class="detail-title">${esc(w.titolo)}</h1>
+          <div class="detail-price">${w.prezzo ? w.prezzo.toFixed(2).replace('.',',') + ' €' : ''}</div>
+        </div>
+        <div class="detail-badges">${badges}</div>
+        ${w.descrizione ? `<p class="detail-desc">${esc(w.descrizione)}</p>` : ""}
+        ${w.abbinamenti ? `<div class="detail-extra"><strong>Abbinamenti:</strong><br>${esc(w.abbinamenti)}</div>` : ""}
+      </div>
+    </div>
+  `;
+  window.scrollTo(0,0);
 }
 
 // EVENTS
 function bindEvents() {
-  const bind = (node, evt) => node && node.addEventListener(evt, applyFilters);
+  el.q.addEventListener("input", applyFilters);
+  el.tipologia.addEventListener("change", applyFilters);
+  el.luogo.addEventListener("change", applyFilters);
+  el.uvaggio.addEventListener("change", applyFilters);
+  el.annata.addEventListener("change", applyFilters);
+  el.prezzoMax.addEventListener("input", applyFilters);
 
-  bind(el.q, "input");
-  bind(el.tipologia, "change");
-  bind(el.luogo, "change");
-  bind(el.uvaggio, "change");
-  bind(el.annata, "change");
-  bind(el.prezzoMax, "input");
-
-  el.resetBtn?.addEventListener("click", () => {
+  el.resetBtn.addEventListener("click", () => {
     el.q.value = "";
     el.tipologia.value = "";
     el.luogo.value = "";
@@ -294,31 +224,13 @@ function bindEvents() {
     applyFilters();
   });
 
-  el.backBtn?.addEventListener("click", () => {
+  el.backBtn.addEventListener("click", () => {
     location.hash = "";
-    showList();
   });
 
   window.addEventListener("hashchange", handleRoute);
 }
 
 // START
-(async function start() {
-  bindEvents();
-  try {
-    await loadWines();
-  } catch (err) {
-    console.error(err);
-    setHint("Errore nel caricamento.");
-    setCount(0);
-    if (el.grid) {
-      el.grid.innerHTML = `
-        <div class="empty">
-          <div class="empty__title">Errore di caricamento</div>
-          <div class="empty__text">Dettaglio: <code>${esc(err?.message || "Errore sconosciuto")}</code></div>
-        </div>`;
-    }
-  }
-})();
-
-
+bindEvents();
+loadWines();
